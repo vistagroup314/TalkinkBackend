@@ -1,0 +1,15 @@
+{
+  "name": "talkink-backend",
+  "version": "1.0.0",
+  "description": "Razorpay backend for TalkInk",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "razorpay": "^2.9.2",
+    "cors": "^2.8.5"
+  }
+}
+
