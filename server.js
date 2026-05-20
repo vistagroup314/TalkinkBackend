@@ -13,7 +13,7 @@ app.use(cors({
   origin: function(origin, callback){
     if(!origin) return callback(null, true);
     if(allowedOrigins.indexOf(origin) === -1){
-      return callback(new Error('CORS Policy: Access denied from this origin.'), false);
+      return callback(new Error('CORS Policy: Access denied.'), false);
     }
     return callback(null, true);
   }
@@ -22,7 +22,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔐 Instamojo Sandbox (Test Mode) Credentials
+// 🔐 Instamojo LIVE Production Credentials
 const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
 const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
 
@@ -57,7 +57,7 @@ app.post('/create-order', async (req, res) => {
     }).toString();
 
     const tokenOptions = {
-      hostname: 'test-api.instamojo.com', // 🔥 FIX: Naya Testing Domain lagaya hai
+      hostname: 'api.instamojo.com', // 🎯 LIVE PRODUCTION DOMAIN
       path: '/oauth2/token/',
       method: 'POST',
       headers: {
@@ -66,38 +66,37 @@ app.post('/create-order', async (req, res) => {
       }
     };
 
-    console.log("Generating OAuth2 Token from Instamojo Test API Server...");
+    console.log("Generating Production OAuth2 Token...");
     const tokenResult = await makeHttpsRequest(tokenOptions, tokenPayload);
 
     if (tokenResult.statusCode !== 200 || !tokenResult.data.access_token) {
       return res.status(401).json({
         success: false,
-        message: "Failed to generate Test Access Token. Verify Sandbox Credentials.",
+        message: "Live Authentication failed. KYC might be pending.",
         details: tokenResult.data
       });
     }
 
     const accessToken = tokenResult.data.access_token;
-    console.log("Test Token Generated successfully!");
 
     const requestOrigin = req.headers.origin || 'https://bhoiganesh218.github.io';
     const redirectUrl = `${requestOrigin}/talkink/?page=LibraryPage&bookId=${bookId}`;
 
     const paymentPayload = JSON.stringify({
       amount: String(amount),
-      purpose: purpose || 'TalkInk Book Purchase Test',
-      buyer_name: buyer_name || 'Ganesh Tester',
-      email: email || 'talkinktest@gmail.com',
+      purpose: purpose || 'TalkInk Book Purchase',
+      buyer_name: buyer_name || 'TalkInk User',
+      email: email || 'user@talkink.com',
       phone: '9999999999',
       allow_repeated_payments: false,
-      send_email: false,
+      send_email: true,
       send_sms: false,
       redirect_url: redirectUrl,
       webhook: 'https://talkinkbackend.onrender.com/instamojo-webhook'
     });
 
     const paymentOptions = {
-      hostname: 'test-api.instamojo.com', // 🔥 FIX: Naya Testing Domain lagaya hai
+      hostname: 'api.instamojo.com', // 🎯 LIVE PRODUCTION DOMAIN
       path: '/v2/payment_requests/',
       method: 'POST',
       headers: {
@@ -118,13 +117,12 @@ app.post('/create-order', async (req, res) => {
     } else {
       res.status(400).json({
         success: false,
-        message: paymentResult.data.message || "Test Gateway rejected payment parameters.",
+        message: "Production gateway rejected request. Check account verification.",
         error: paymentResult.data
       });
     }
 
   } catch (err) {
-    console.error("Core Engine Failure:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -134,4 +132,4 @@ app.post('/instamojo-webhook', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Test Engine running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Production Engine active on port ${PORT}`));
