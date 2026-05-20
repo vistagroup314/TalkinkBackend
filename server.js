@@ -4,7 +4,6 @@ const https = require('https');
 
 const app = express();
 
-// 🌐 CORS CONFIGURATION (Localhost aur GitHub Pages dono allowed hain)
 const allowedOrigins = [
   'http://localhost:8158',
   'https://bhoiganesh218.github.io'
@@ -27,7 +26,6 @@ app.use(express.urlencoded({ extended: true }));
 const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
 const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
 
-// Helper function to handle internal HTTPS requests cleanly
 function makeHttpsRequest(options, payloadData) {
   return new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
@@ -48,12 +46,10 @@ function makeHttpsRequest(options, payloadData) {
   });
 }
 
-// 🎯 Main API Endpoint to create payment order in Test Mode
 app.post('/create-order', async (req, res) => {
   try {
     const { amount, purpose, buyer_name, email, bookId } = req.body;
 
-    // STEP 1: Generate Test Access Token using Client ID & Secret
     const tokenPayload = new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: CLIENT_ID,
@@ -61,7 +57,7 @@ app.post('/create-order', async (req, res) => {
     }).toString();
 
     const tokenOptions = {
-      hostname: 'test.instamojo.com', // 🎯 Standard Testing Domain
+      hostname: 'test-api.instamojo.com', // 🔥 FIX: Naya Testing Domain lagaya hai
       path: '/oauth2/token/',
       method: 'POST',
       headers: {
@@ -70,7 +66,7 @@ app.post('/create-order', async (req, res) => {
       }
     };
 
-    console.log("Generating OAuth2 Token from Instamojo Test Server...");
+    console.log("Generating OAuth2 Token from Instamojo Test API Server...");
     const tokenResult = await makeHttpsRequest(tokenOptions, tokenPayload);
 
     if (tokenResult.statusCode !== 200 || !tokenResult.data.access_token) {
@@ -82,17 +78,14 @@ app.post('/create-order', async (req, res) => {
     }
 
     const accessToken = tokenResult.data.access_token;
-    console.log("Test Token Generated successfully! Creating testing payment link...");
+    console.log("Test Token Generated successfully!");
 
-    // 🌐 REDIRECT URL FIX: Dono redirect URLs handle kiye hain (Localhost aur Live GitHub Pages)
-    // Agar origin localhost hai toh localhost par bhejega, nahi toh live site par.
     const requestOrigin = req.headers.origin || 'https://bhoiganesh218.github.io';
     const redirectUrl = `${requestOrigin}/talkink/?page=LibraryPage&bookId=${bookId}`;
 
-    // STEP 2: Create Payment Request
     const paymentPayload = JSON.stringify({
       amount: String(amount),
-      purpose: purpose || 'Narrato/TalkInk Book Purchase Test',
+      purpose: purpose || 'TalkInk Book Purchase Test',
       buyer_name: buyer_name || 'Ganesh Tester',
       email: email || 'talkinktest@gmail.com',
       phone: '9999999999',
@@ -104,7 +97,7 @@ app.post('/create-order', async (req, res) => {
     });
 
     const paymentOptions = {
-      hostname: 'test.instamojo.com', // 🎯 Standard Testing Domain
+      hostname: 'test-api.instamojo.com', // 🔥 FIX: Naya Testing Domain lagaya hai
       path: '/v2/payment_requests/',
       method: 'POST',
       headers: {
@@ -136,7 +129,6 @@ app.post('/create-order', async (req, res) => {
   }
 });
 
-// Webhook listener
 app.post('/instamojo-webhook', (req, res) => {
    res.status(200).send("OK");
 });
