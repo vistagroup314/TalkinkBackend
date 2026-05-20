@@ -1,33 +1,50 @@
 const express = require('express');
-const Razorpay = require('razorpay');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// 🌐 CORS Allowed Origins (Testing aur Live dono ke liye)
+const allowedOrigins = [
+  'http://localhost:8158',
+  'https://bhoiganesh218.github.io'
+];
+
+app.use(cors({
+  origin: function(origin, callback){
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      return callback(new Error('CORS Policy: Access denied.'), false);
+    }
+    return callback(null, true);
+  }
+}));
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Tumhari Test Keys yahan hain
-const razorpay = new Razorpay({
-  key_id: 'rzp_test_SoxJpIqg8PwTZW',
-  key_secret: 'unFhfLs4ensCwmGTY8lJXq23'
-});
-
-// Order Create API
-app.post('/create-order', async (req, res) => {
+// 🎯 FAKE ORDER ENDPOINT (Instamojo Bypass)
+app.post('/create-order', (req, res) => {
   try {
-    const options = {
-      amount: req.body.amount * 100, // ₹ to Paise
-      currency: "INR",
-      receipt: "talkink_rcpt_" + Date.now(),
-    };
-    const order = await razorpay.orders.create(options);
-    res.status(200).json(order);
+    const { bookId } = req.body;
+    console.log(`Bypassing payment gateway for Book ID: ${bookId}`);
+
+    // Hum direct ek dummy longurl bhej rahe hain jo automatic redirect handle karega
+    // Isse aapka frontend bina kisi external login ke seedha success mode me chala jayega
+    res.status(200).json({
+      success: true,
+      longurl: `https://bhoiganesh218.github.io/talkink/?page=LibraryPage&bookId=${bookId}&status=success`,
+      id: "FAKE_IM_ORDER_" + Math.random().toString(36).substr(2, 9)
+    });
+
   } catch (err) {
-    console.error("Order Error:", err);
-    res.status(500).json(err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Dummy Webhook Listener
+app.post('/instamojo-webhook', (req, res) => {
+   res.status(200).send("OK");
+});
 
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Bypass Server running on port ${PORT}`));
