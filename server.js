@@ -128,7 +128,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 BULLETPROOF DIRECT GOOGLE/MICROSOFT TTS GATEWAY ROUTE (NO LIBRARIES)
+// 🔊 STANDALONE MICROSOFT EDGE TTS ROUTE (ZERO DEPENDENCY / NO CAPTCHA)
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -138,30 +138,54 @@ app.post('/tts-stream', async (req, res) => {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
 
-    // 🎯 PREMIUM VOICES GEOLOCATION MAPPING
+    // 🎯 PREMIUM VOICES SELECTION
     let voiceTarget = 'en-US-AndrewNeural'; 
-    let targetLocale = 'en-US';
 
-    if (lang === 'hi') { voiceTarget = 'hi-IN-MadhurNeural'; targetLocale = 'hi-IN'; }
-    else if (lang === 'or') { voiceTarget = 'or-IN-SubhashiniNeural'; targetLocale = 'or-IN'; }
-    else if (lang === 'bn') { voiceTarget = 'bn-IN-BashkarNeural'; targetLocale = 'bn-IN'; }
-    else if (lang === 'es') { voiceTarget = 'es-ES-AlvaroNeural'; targetLocale = 'es-ES'; }
-    else if (lang === 'fr') { voiceTarget = 'fr-FR-HenriNeural'; targetLocale = 'fr-FR'; }
+    if (lang === 'hi') voiceTarget = 'hi-IN-MadhurNeural';      
+    else if (lang === 'or') voiceTarget = 'or-IN-SubhashiniNeural'; 
+    else if (lang === 'bn') voiceTarget = 'bn-IN-BashkarNeural';    
+    else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
+    else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
 
-    console.log(`[Narrato Speech Engine] Direct Cloud Request for Voice: ${voiceTarget}`);
+    console.log(`[Narrato Speech Engine] Requesting Premium Stream for: ${voiceTarget}`);
 
-    // 🔥 Google Translate API fallback mechanism as an absolute clean buffer stream
-    const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLocale.split('-')[0]}&client=tw-ob&q=${encodeURIComponent(text)}`;
+    // Dynamic SSML Structure for Microsoft Edge Server
+    const ssmlPayload = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceTarget}'><prosody pitch='+0Hz' rate='+0%'>${text}</prosody></voice></speak>`;
+
+    const requestOptions = {
+      hostname: 'eastus.tts.speech.microsoft.com',
+      path: '/cognition/synthesize/cognitive/v1.0',
+      method: 'POST',
+      headers: {
+        'X-Microsoft-OutputFormat': 'audio-16khz-128kbps-mono-mp3',
+        'Content-Type': 'application/ssml+xml',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Content-Length': Buffer.byteLength(ssmlPayload)
+      }
+    };
 
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache');
 
-    // Pipe the direct server audio streaming chunks straight to the frontend response nodes
-    https.get(googleTtsUrl, (streamResponse) => {
-      streamResponse.pipe(res);
-    }).on('error', (streamErr) => {
-      throw new Error(streamErr.message);
+    const edgeReq = https.request(requestOptions, (edgeRes) => {
+      // Check if Microsoft successfully processed the voice chunk
+      if (edgeRes.statusCode === 200) {
+        edgeRes.pipe(res); // Directly pipe solid binary audio chunks to frontend
+      } else {
+        let errData = '';
+        edgeRes.on('data', chunk => errData += chunk);
+        edgeRes.on('end', () => {
+          res.status(500).json({ success: false, error: `Microsoft TTS rejected request: ${errData}` });
+        });
+      }
     });
+
+    edgeReq.on('error', (e) => {
+      res.status(500).json({ success: false, error: e.message });
+    });
+
+    edgeReq.write(ssmlPayload);
+    edgeReq.end();
 
   } catch (err) {
     console.error("❌ Direct Vocal Engine Fault:", err);
