@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const crypto = require('crypto');
+const sdk = require("microsoft-cognitiveservices-speech-sdk");
 
 const app = express();
 
@@ -129,7 +129,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 ZERO-DEPENDENCY EDGE TTS ENGINE (NATIVE WEB INTERFACE PROTOCOL)
+// 🔊 OFFICIAL MICROSOFT SPEECH SDK STREAM CHANNELS (BULLETPROOF FIX)
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -148,69 +148,44 @@ app.post('/tts-stream', async (req, res) => {
     else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
     else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
 
-    console.log(`[Narrato Native Engine] Synthesizing via WebSocket for Voice: ${voiceTarget}`);
+    console.log(`[Narrato SDK Engine] Synthesizing speech natively via Microsoft SDK for: ${voiceTarget}`);
 
-    // Dynamic Connection Token Key
-    const connectionId = crypto.randomBytes(16).toString('hex');
+    // Create stable speech config using Edge public subscription-free endpoints
+    const speechConfig = sdk.SpeechConfig.fromEndpoint(
+      new URL(`wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/trusted/v1?TrustedClientToken=6A5AA1D4EAFF4E9B87E7D3D283303AF6`)
+    );
     
-    // SSML formatting payload
-    const ssmlStructure = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceTarget}'><prosody pitch='+0Hz' rate='+0%'>${text}</prosody></voice></speak>`;
+    speechConfig.speechSynthesisVoiceName = voiceTarget;
+    speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16khz128KBitRateMonoMp3;
 
-    // Node Native WebSocket implementation (Available in Node 22+)
-    const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/trusted/v1?TrustedClientToken=6A5AA1D4EAFF4E9B87E7D3D283303AF6&ConnectionId=${connectionId}`;
-    
-    const WebSocket = global.WebSocket || require('ws'); // Uses global browser-equivalent engine
-    const socket = new WebSocket(wsUrl);
+    // Direct push stream allocation
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
 
-    let audioBuffers = [];
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-cache');
 
-    socket.onopen = () => {
-      // Configuration Handshake header strings
-      const configHeader = `X-Timestamp:${new Date().toISOString()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"system":{"name":"Edge"},"user":{}}}`;
-      socket.send(configHeader);
-
-      // Synthesis message delivery block
-      const synthesisHeader = `X-RequestId:${connectionId}\r\nContent-Type:application/ssml+xml\r\nPath:ssml\r\n\r\n${ssmlStructure}`;
-      socket.send(synthesisHeader);
-    };
-
-    socket.onmessage = async (event) => {
-      if (typeof event.data === 'string') {
-        if (event.data.includes('turn.end')) {
-          socket.close();
-          
-          // Combine all chunk blocks into a single stable binary array buffer
-          const finalAudioBuffer = Buffer.concat(audioBuffers);
-          
-          res.setHeader('Content-Type', 'audio/mpeg');
-          res.setHeader('Content-Length', finalAudioBuffer.length);
-          res.setHeader('Cache-Control', 'no-cache');
-          res.send(finalAudioBuffer);
+    synthesizer.speakTextAsync(
+      text,
+      result => {
+        if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+          // Convert the raw SDK ArrayBuffer securely into a pure Node.js Buffer
+          const audioBuffer = Buffer.from(result.audioData);
+          res.send(audioBuffer);
+          synthesizer.close();
+        } else {
+          res.status(500).json({ success: false, error: "Speech SDK internal compression break." });
+          synthesizer.close();
         }
-      } else {
-        // Handle raw binary chunk incoming frames
-        const arrayBuffer = await event.data.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        
-        // Find header index boundary safely
-        const pathIndex = buffer.toString().indexOf("Path:audio\r\n");
-        if (pathIndex !== -1) {
-          const bodyStartIndex = buffer.toString().indexOf("\r\n\r\n", pathIndex) + 4;
-          const pureAudioChunk = buffer.subarray(bodyStartIndex);
-          audioBuffers.push(pureAudioChunk);
-        }
+      },
+      error => {
+        console.error("SDK Synthesis Error:", error);
+        res.status(500).json({ success: false, error: error.message });
+        synthesizer.close();
       }
-    };
-
-    socket.onerror = (wsErr) => {
-      console.error("WebSocket Internal Stream Error:", wsErr);
-      if (!res.headersSent) {
-        res.status(500).json({ success: false, error: "WebSocket speech stream failed." });
-      }
-    };
+    );
 
   } catch (err) {
-    console.error("❌ Native Edge TTS Engine Crash Logs:", err);
+    console.error("❌ Official SDK Engine Crash Logs:", err);
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
     }
