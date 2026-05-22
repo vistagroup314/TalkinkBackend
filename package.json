@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "edge-tts-node": "^0.1.2",
     "express": "^4.18.2",
-    "express-edge-tts": "^1.2.0",
     "razorpay": "^2.9.2"
   }
 }
