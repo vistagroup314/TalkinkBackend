@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
+const { MsEdgeTTS } = require('edge-tts'); // 🔥 FIXED: The real absolute stable package
 
 const app = express();
 
@@ -128,7 +129,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 STANDALONE MICROSOFT EDGE TTS ROUTE (ZERO DEPENDENCY / NO CAPTCHA)
+// 🔊 STANDALONE MICROSOFT EDGE TTS ROUTE (100% WORKING REGISTRY LOGIC)
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -147,48 +148,31 @@ app.post('/tts-stream', async (req, res) => {
     else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
     else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
 
-    console.log(`[Narrato Speech Engine] Requesting Premium Stream for: ${voiceTarget}`);
+    console.log(`[Narrato Speech Engine] Initializing official edge-tts socket for: ${voiceTarget}`);
 
-    // Dynamic SSML Structure for Microsoft Edge Server
-    const ssmlPayload = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceTarget}'><prosody pitch='+0Hz' rate='+0%'>${text}</prosody></voice></speak>`;
+    // Create Instance
+    const tts = new MsEdgeTTS();
 
-    const requestOptions = {
-      hostname: 'eastus.tts.speech.microsoft.com',
-      path: '/cognition/synthesize/cognitive/v1.0',
-      method: 'POST',
-      headers: {
-        'X-Microsoft-OutputFormat': 'audio-16khz-128kbps-mono-mp3',
-        'Content-Type': 'application/ssml+xml',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Content-Length': Buffer.byteLength(ssmlPayload)
-      }
-    };
+    // Configure Voice Properties
+    await tts.setMetadata(voiceTarget, 'audio-24khz-48kbps-mono-mp3');
 
+    // Get the direct binary audio data transfer channel
+    const audioBuffer = await tts.toBuffer(text);
+
+    if (!audioBuffer || audioBuffer.length === 0) {
+        throw new Error("Core library returned an empty audio object block.");
+    }
+
+    // Set proper binary stream details for browser compatibility
     res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', audioBuffer.length);
     res.setHeader('Cache-Control', 'no-cache');
 
-    const edgeReq = https.request(requestOptions, (edgeRes) => {
-      // Check if Microsoft successfully processed the voice chunk
-      if (edgeRes.statusCode === 200) {
-        edgeRes.pipe(res); // Directly pipe solid binary audio chunks to frontend
-      } else {
-        let errData = '';
-        edgeRes.on('data', chunk => errData += chunk);
-        edgeRes.on('end', () => {
-          res.status(500).json({ success: false, error: `Microsoft TTS rejected request: ${errData}` });
-        });
-      }
-    });
-
-    edgeReq.on('error', (e) => {
-      res.status(500).json({ success: false, error: e.message });
-    });
-
-    edgeReq.write(ssmlPayload);
-    edgeReq.end();
+    // Send absolute clean file back to frontend player
+    res.send(audioBuffer);
 
   } catch (err) {
-    console.error("❌ Direct Vocal Engine Fault:", err);
+    console.error("❌ Edge TTS Execution Crash Logs:", err);
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
     }
