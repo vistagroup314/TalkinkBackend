@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const crypto = require('crypto');
 
 const app = express();
 
@@ -129,7 +128,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 FIXED PURE HTTPS MICROSOFT EDGE TTS ROUTE (ZERO ERROR / GUARANTEED PLAY)
+// 🔊 BULLETPROOF RE-ROUTE: HIGH-SPEED BYPASS GOOGLE SPEECH GATEWAY
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -139,56 +138,45 @@ app.post('/tts-stream', async (req, res) => {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
 
-    // 🎯 PREMIUM VOICES SELECTION
-    let voiceTarget = 'en-US-AndrewNeural'; 
+    // Locale normalization matrix
+    let targetLocale = 'en';
+    if (lang === 'hi') targetLocale = 'hi';
+    else if (lang === 'or') targetLocale = 'or';
+    else if (lang === 'bn') targetLocale = 'bn';
+    else if (lang === 'es') targetLocale = 'es';
+    else if (lang === 'fr') targetLocale = 'fr';
 
-    if (lang === 'hi') voiceTarget = 'hi-IN-MadhurNeural';      
-    else if (lang === 'or') voiceTarget = 'or-IN-SubhashiniNeural'; 
-    else if (lang === 'bn') voiceTarget = 'bn-IN-BashkarNeural';    
-    else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
-    else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
+    console.log(`[Narrato Core Engine] Fetching stable chunk stream for language code: ${targetLocale}`);
 
-    console.log(`[Narrato Pure HTTPS Engine] Fetching Voice from Microsoft Edge API for: ${voiceTarget}`);
+    // Build standard high-authority API request url
+    const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLocale}&client=tw-ob&q=${encodeURIComponent(text)}`;
 
-    // Create a unique correlation ID for Microsoft network
-    const reqId = crypto.randomBytes(16).toString('hex');
-
-    // Build absolute raw SSML payload
-    const ssmlStructure = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceTarget}'><prosody pitch='+0Hz' rate='+0%'>${text}</prosody></voice></speak>`;
-
-    const edgeOptions = {
-      hostname: 'speech.platform.bing.com',
-      path: '/consumer/speech/synthesize/readaloud/trusted/v1?TrustedClientToken=6A5AA1D4EAFF4E9B87E7D3D283303AF6',
-      method: 'POST',
+    const requestOptions = {
       headers: {
-        'Content-Type': 'application/ssml+xml',
-        'X-Microsoft-OutputFormat': 'audio-16khz-128kbps-mono-mp3',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-        'X-RequestId': reqId
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://translate.google.com/'
       }
     };
 
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Cache-Control', 'no-cache');
-
-    const edgeReq = https.request(edgeOptions, (edgeRes) => {
-      if (edgeRes.statusCode === 200) {
-        // Direct absolute streaming pipe with no internal data mutations
-        edgeRes.pipe(res);
+    // Trigger explicit secure get handshake
+    https.get(googleTtsUrl, requestOptions, (googleRes) => {
+      if (googleRes.statusCode === 200) {
+        // Force fully streamable headers directly back to the app player
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Transfer-Encoding', 'chunked');
+        
+        // Pipe the live buffer array stream smoothly
+        googleRes.pipe(res);
       } else {
-        res.status(500).json({ success: false, error: `Edge service returned status: ${edgeRes.statusCode}` });
+        res.status(500).json({ success: false, error: `Google cloud rejected stream with status: ${googleRes.statusCode}` });
       }
+    }).on('error', (err) => {
+      res.status(500).json({ success: false, error: err.message });
     });
-
-    edgeReq.on('error', (streamErr) => {
-      res.status(500).json({ success: false, error: streamErr.message });
-    });
-
-    edgeReq.write(ssmlStructure);
-    edgeReq.end();
 
   } catch (err) {
-    console.error("❌ Direct Vocal Engine Fault:", err);
+    console.error("❌ High-Speed Vocal Engine Fault:", err);
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
     }
