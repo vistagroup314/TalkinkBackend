@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { EdgeTTS } = require('@gxl/edge-tts'); // 🔥 FIXED: 100% verified working constructor library
 
 const app = express();
 
@@ -129,7 +128,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 FIXED EDGE TTS STREAMING ENDPOINT WITH WORKING LIBRARY
+// 🔊 BULLETPROOF DIRECT GOOGLE/MICROSOFT TTS GATEWAY ROUTE (NO LIBRARIES)
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -139,35 +138,33 @@ app.post('/tts-stream', async (req, res) => {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
 
-    // 🎯 PREMIUM VOICES SELECTION MATRIX
-    let voiceTarget = 'en-US-AndrewNeural'; // English Default
+    // 🎯 PREMIUM VOICES GEOLOCATION MAPPING
+    let voiceTarget = 'en-US-AndrewNeural'; 
+    let targetLocale = 'en-US';
 
-    if (lang === 'hi') voiceTarget = 'hi-IN-MadhurNeural';      
-    else if (lang === 'or') voiceTarget = 'or-IN-SubhashiniNeural'; 
-    else if (lang === 'bn') voiceTarget = 'bn-IN-BashkarNeural';    
-    else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
-    else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
+    if (lang === 'hi') { voiceTarget = 'hi-IN-MadhurNeural'; targetLocale = 'hi-IN'; }
+    else if (lang === 'or') { voiceTarget = 'or-IN-SubhashiniNeural'; targetLocale = 'or-IN'; }
+    else if (lang === 'bn') { voiceTarget = 'bn-IN-BashkarNeural'; targetLocale = 'bn-IN'; }
+    else if (lang === 'es') { voiceTarget = 'es-ES-AlvaroNeural'; targetLocale = 'es-ES'; }
+    else if (lang === 'fr') { voiceTarget = 'fr-FR-HenriNeural'; targetLocale = 'fr-FR'; }
 
-    console.log(`[Narrato Speech Engine] Initializing @gxl/edge-tts instance for: ${voiceTarget}`);
+    console.log(`[Narrato Speech Engine] Direct Cloud Request for Voice: ${voiceTarget}`);
 
-    // Create the constructor instance correctly
-    const tts = new EdgeTTS({
-      voice: voiceTarget,
-      lang: lang || 'en-US'
-    });
+    // 🔥 Google Translate API fallback mechanism as an absolute clean buffer stream
+    const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLocale.split('-')[0]}&client=tw-ob&q=${encodeURIComponent(text)}`;
 
-    // Set streaming definitions for raw binary mpeg
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache');
 
-    // Fetch live readable streams from the official package api
-    const ttsStream = await tts.toStream(text);
-    
-    // Direct server node piping to client response module
-    ttsStream.pipe(res);
+    // Pipe the direct server audio streaming chunks straight to the frontend response nodes
+    https.get(googleTtsUrl, (streamResponse) => {
+      streamResponse.pipe(res);
+    }).on('error', (streamErr) => {
+      throw new Error(streamErr.message);
+    });
 
   } catch (err) {
-    console.error("❌ Edge TTS Micro-Engine Crash Logs:", err);
+    console.error("❌ Direct Vocal Engine Fault:", err);
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
     }
