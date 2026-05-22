@@ -1,14 +1,13 @@
 {
   "name": "talkink-backend",
   "version": "1.0.0",
-  "description": "Razorpay and Premium Edge TTS backend for TalkInk",
+  "description": "Premium Edge TTS backend for TalkInk",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "edge-tts": "^1.2.2",
     "express": "^4.18.2",
     "razorpay": "^2.9.2"
   }
