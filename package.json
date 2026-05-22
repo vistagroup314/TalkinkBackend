@@ -1,7 +1,7 @@
 {
   "name": "talkink-backend",
   "version": "1.0.0",
-  "description": "Official Microsoft SDK Premium TTS backend for TalkInk",
+  "description": "Premium TTS backend for TalkInk",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,7 +9,6 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "microsoft-cognitiveservices-speech-sdk": "^1.35.0",
     "razorpay": "^2.9.2"
   }
 }
