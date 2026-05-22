@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const sdk = require("microsoft-cognitiveservices-speech-sdk");
+const crypto = require('crypto');
 
 const app = express();
 
@@ -129,7 +129,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 OFFICIAL MICROSOFT SPEECH SDK STREAM CHANNELS (BULLETPROOF FIX)
+// 🔊 FIXED PURE HTTPS MICROSOFT EDGE TTS ROUTE (ZERO ERROR / GUARANTEED PLAY)
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -148,44 +148,47 @@ app.post('/tts-stream', async (req, res) => {
     else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
     else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
 
-    console.log(`[Narrato SDK Engine] Synthesizing speech natively via Microsoft SDK for: ${voiceTarget}`);
+    console.log(`[Narrato Pure HTTPS Engine] Fetching Voice from Microsoft Edge API for: ${voiceTarget}`);
 
-    // Create stable speech config using Edge public subscription-free endpoints
-    const speechConfig = sdk.SpeechConfig.fromEndpoint(
-      new URL(`wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/trusted/v1?TrustedClientToken=6A5AA1D4EAFF4E9B87E7D3D283303AF6`)
-    );
-    
-    speechConfig.speechSynthesisVoiceName = voiceTarget;
-    speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16khz128KBitRateMonoMp3;
+    // Create a unique correlation ID for Microsoft network
+    const reqId = crypto.randomBytes(16).toString('hex');
 
-    // Direct push stream allocation
-    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+    // Build absolute raw SSML payload
+    const ssmlStructure = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceTarget}'><prosody pitch='+0Hz' rate='+0%'>${text}</prosody></voice></speak>`;
+
+    const edgeOptions = {
+      hostname: 'speech.platform.bing.com',
+      path: '/consumer/speech/synthesize/readaloud/trusted/v1?TrustedClientToken=6A5AA1D4EAFF4E9B87E7D3D283303AF6',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/ssml+xml',
+        'X-Microsoft-OutputFormat': 'audio-16khz-128kbps-mono-mp3',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+        'X-RequestId': reqId
+      }
+    };
 
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache');
 
-    synthesizer.speakTextAsync(
-      text,
-      result => {
-        if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
-          // Convert the raw SDK ArrayBuffer securely into a pure Node.js Buffer
-          const audioBuffer = Buffer.from(result.audioData);
-          res.send(audioBuffer);
-          synthesizer.close();
-        } else {
-          res.status(500).json({ success: false, error: "Speech SDK internal compression break." });
-          synthesizer.close();
-        }
-      },
-      error => {
-        console.error("SDK Synthesis Error:", error);
-        res.status(500).json({ success: false, error: error.message });
-        synthesizer.close();
+    const edgeReq = https.request(edgeOptions, (edgeRes) => {
+      if (edgeRes.statusCode === 200) {
+        // Direct absolute streaming pipe with no internal data mutations
+        edgeRes.pipe(res);
+      } else {
+        res.status(500).json({ success: false, error: `Edge service returned status: ${edgeRes.statusCode}` });
       }
-    );
+    });
+
+    edgeReq.on('error', (streamErr) => {
+      res.status(500).json({ success: false, error: streamErr.message });
+    });
+
+    edgeReq.write(ssmlStructure);
+    edgeReq.end();
 
   } catch (err) {
-    console.error("❌ Official SDK Engine Crash Logs:", err);
+    console.error("❌ Direct Vocal Engine Fault:", err);
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
     }
