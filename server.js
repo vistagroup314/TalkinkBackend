@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
+const { EdgeTTS } = require('express-edge-tts'); // 🔥 NEW: Premium Voice Engine Linker
 
 const app = express();
 
@@ -46,6 +47,9 @@ function makeHttpsRequest(options, payloadData) {
   });
 }
 
+// ==========================================================================
+// 💳 EXISTING INSTAMOJO ORDER CREATION ROUTE
+// ==========================================================================
 app.post('/create-order', async (req, res) => {
   try {
     const { amount, purpose, buyer_name, email, bookId } = req.body;
@@ -57,7 +61,7 @@ app.post('/create-order', async (req, res) => {
     }).toString();
 
     const tokenOptions = {
-      hostname: 'api.instamojo.com', // 🎯 LIVE PRODUCTION DOMAIN
+      hostname: 'api.instamojo.com', 
       path: '/oauth2/token/',
       method: 'POST',
       headers: {
@@ -96,7 +100,7 @@ app.post('/create-order', async (req, res) => {
     });
 
     const paymentOptions = {
-      hostname: 'api.instamojo.com', // 🎯 LIVE PRODUCTION DOMAIN
+      hostname: 'api.instamojo.com', 
       path: '/v2/payment_requests/',
       method: 'POST',
       headers: {
@@ -130,6 +134,52 @@ app.post('/create-order', async (req, res) => {
 app.post('/instamojo-webhook', (req, res) => {
    res.status(200).send("OK");
 });
+
+
+// ==========================================================================
+// 🔊 NEW: HIGH-CLARITY MULTI-LANGUAGE EDGE TTS STREAMING ENDPOINT
+// ==========================================================================
+app.post('/tts-stream', async (req, res) => {
+  try {
+    const { text, lang } = req.body;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
+    }
+
+    // Initialize Edge TTS Engine
+    const tts = new EdgeTTS();
+    
+    // 🎯 PREMIUM VOICES SELECTION MATRIX
+    // Hindi ke liye 'Madhur' (Male Ultra Clear) aur English ke liye 'Andrew' (Male Realistic Narrative)
+    // Famous custom overrides backup keys setup:
+    let voiceTarget = 'en-US-AndrewNeural'; // English Default
+    
+    if (lang === 'hi') voiceTarget = 'hi-IN-MadhurNeural';      // Hindi
+    else if (lang === 'or') voiceTarget = 'or-IN-SubhashiniNeural'; // Odia (Native Clear)
+    else if (lang === 'bn') voiceTarget = 'bn-IN-BashkarNeural';    // Bengali
+    else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     // Spanish
+    else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      // French
+
+    // Set chunked binary streaming configuration headers safely
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    console.log(`[Narrato Speech Engine] Processing vocal matrix for voice: ${voiceTarget}`);
+    
+    // Fetch system stream and pipe it directly to frontend live response stream
+    const ttsStream = await tts.stream(text, voiceTarget);
+    ttsStream.pipe(res);
+
+  } catch (err) {
+    console.error("Edge TTS Micro-Engine fault:", err);
+    // Stream broken safety cleanup response (Bypass if headers are already sent)
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: "Cloud vocal pipeline synchronization failed." });
+    }
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Production Engine active on port ${PORT}`));
