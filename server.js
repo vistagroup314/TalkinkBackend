@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { MsEdgeTTS } = require('edge-tts'); // 🔥 FIXED: The real absolute stable package
+const crypto = require('crypto');
 
 const app = express();
 
@@ -129,7 +129,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 STANDALONE MICROSOFT EDGE TTS ROUTE (100% WORKING REGISTRY LOGIC)
+// 🔊 ZERO-DEPENDENCY EDGE TTS ENGINE (NATIVE WEB INTERFACE PROTOCOL)
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -148,31 +148,69 @@ app.post('/tts-stream', async (req, res) => {
     else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
     else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
 
-    console.log(`[Narrato Speech Engine] Initializing official edge-tts socket for: ${voiceTarget}`);
+    console.log(`[Narrato Native Engine] Synthesizing via WebSocket for Voice: ${voiceTarget}`);
 
-    // Create Instance
-    const tts = new MsEdgeTTS();
+    // Dynamic Connection Token Key
+    const connectionId = crypto.randomBytes(16).toString('hex');
+    
+    // SSML formatting payload
+    const ssmlStructure = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceTarget}'><prosody pitch='+0Hz' rate='+0%'>${text}</prosody></voice></speak>`;
 
-    // Configure Voice Properties
-    await tts.setMetadata(voiceTarget, 'audio-24khz-48kbps-mono-mp3');
+    // Node Native WebSocket implementation (Available in Node 22+)
+    const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/trusted/v1?TrustedClientToken=6A5AA1D4EAFF4E9B87E7D3D283303AF6&ConnectionId=${connectionId}`;
+    
+    const WebSocket = global.WebSocket || require('ws'); // Uses global browser-equivalent engine
+    const socket = new WebSocket(wsUrl);
 
-    // Get the direct binary audio data transfer channel
-    const audioBuffer = await tts.toBuffer(text);
+    let audioBuffers = [];
 
-    if (!audioBuffer || audioBuffer.length === 0) {
-        throw new Error("Core library returned an empty audio object block.");
-    }
+    socket.onopen = () => {
+      // Configuration Handshake header strings
+      const configHeader = `X-Timestamp:${new Date().toISOString()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"system":{"name":"Edge"},"user":{}}}`;
+      socket.send(configHeader);
 
-    // Set proper binary stream details for browser compatibility
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Length', audioBuffer.length);
-    res.setHeader('Cache-Control', 'no-cache');
+      // Synthesis message delivery block
+      const synthesisHeader = `X-RequestId:${connectionId}\r\nContent-Type:application/ssml+xml\r\nPath:ssml\r\n\r\n${ssmlStructure}`;
+      socket.send(synthesisHeader);
+    };
 
-    // Send absolute clean file back to frontend player
-    res.send(audioBuffer);
+    socket.onmessage = async (event) => {
+      if (typeof event.data === 'string') {
+        if (event.data.includes('turn.end')) {
+          socket.close();
+          
+          // Combine all chunk blocks into a single stable binary array buffer
+          const finalAudioBuffer = Buffer.concat(audioBuffers);
+          
+          res.setHeader('Content-Type', 'audio/mpeg');
+          res.setHeader('Content-Length', finalAudioBuffer.length);
+          res.setHeader('Cache-Control', 'no-cache');
+          res.send(finalAudioBuffer);
+        }
+      } else {
+        // Handle raw binary chunk incoming frames
+        const arrayBuffer = await event.data.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        
+        // Find header index boundary safely
+        const pathIndex = buffer.toString().indexOf("Path:audio\r\n");
+        if (pathIndex !== -1) {
+          const bodyStartIndex = buffer.toString().indexOf("\r\n\r\n", pathIndex) + 4;
+          const pureAudioChunk = buffer.subarray(bodyStartIndex);
+          audioBuffers.push(pureAudioChunk);
+        }
+      }
+    };
+
+    socket.onerror = (wsErr) => {
+      console.error("WebSocket Internal Stream Error:", wsErr);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, error: "WebSocket speech stream failed." });
+      }
+    };
 
   } catch (err) {
-    console.error("❌ Edge TTS Execution Crash Logs:", err);
+    console.error("❌ Native Edge TTS Engine Crash Logs:", err);
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
     }
