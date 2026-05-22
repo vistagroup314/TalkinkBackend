@@ -5,21 +5,9 @@ const { EdgeTTS } = require('edge-tts-node'); // 🔥 FIXED: Sahi library linkin
 
 const app = express();
 
-// 🔐 Secure CORS Policy Setup (Bypasses 'response dropped' block safely)
-const allowedOrigins = [
-  'http://localhost:8158',
-  'https://bhoiganesh218.github.io'
-];
-
+// 🔐 LOOSENED CORS SETUP: Direct testing ke liye CORS bypass lagaya hai taaki browser request drop na kare
 app.use(cors({
-  origin: function(origin, callback){
-    if(!origin) return callback(null, true); // Allow mobile extensions/same-origin fetches
-    // Agar origin allowed list me hai ya github pages ka sub-folder segment hai
-    if(allowedOrigins.indexOf(origin) !== -1 || origin.includes('bhoiganesh218.github.io')){
-      return callback(null, true);
-    }
-    return callback(new Error('CORS Policy: Access denied.'), false);
-  },
+  origin: '*', 
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -141,7 +129,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 NEW: HIGH-CLARITY MULTI-LANGUAGE EDGE TTS STREAMING ENDPOINT
+// 🔊 RE-WRITTEN: HIGH-CLARITY MULTI-LANGUAGE EDGE TTS STREAMING ENDPOINT
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -151,27 +139,43 @@ app.post('/tts-stream', async (req, res) => {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
 
-    // Initialize the fixed Edge TTS Instance Node safely
+    // Initialize edge-tts-node
     const tts = new EdgeTTS();
-    
+
     // 🎯 PREMIUM VOICES SELECTION MATRIX
     let voiceTarget = 'en-US-AndrewNeural'; // English Default
-    
+
     if (lang === 'hi') voiceTarget = 'hi-IN-MadhurNeural';      // Hindi
     else if (lang === 'or') voiceTarget = 'or-IN-SubhashiniNeural'; // Odia 
     else if (lang === 'bn') voiceTarget = 'bn-IN-BashkarNeural';    // Bengali
     else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     // Spanish
     else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      // French
 
-    // Set chunked binary streaming configuration headers safely for HTML5 Audio node consumption
+    // Chunked streaming configurations setup
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('Cache-Control', 'no-cache');
 
-    console.log(`[Narrato Speech Engine] Streaming active voice template: ${voiceTarget}`);
-    
-    // Fetch system stream and pipe it directly to frontend response block
-    const ttsStream = await tts.stream(text, voiceTarget);
-    ttsStream.pipe(res);
+    console.log(`[Narrato Speech Engine] Initializing buffer pipeline for: ${voiceTarget}`);
+
+    // 🔥 CORRECT COMPATIBILITY METHOD FOR edge-tts-node STREAMS
+    const stream = tts.stream({
+        text: text,
+        voice: voiceTarget
+    });
+
+    // Event listener mapping: Pipe the dynamic buffers directly to express response node
+    stream.on('data', (chunk) => {
+        res.write(chunk);
+    });
+
+    stream.on('end', () => {
+        res.end();
+    });
+
+    stream.on('error', (streamErr) => {
+        console.error("Stream compilation core broken:", streamErr);
+        if (!res.headersSent) res.status(500).end();
+    });
 
   } catch (err) {
     console.error("Edge TTS Micro-Engine fault:", err);
