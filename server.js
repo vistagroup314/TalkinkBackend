@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { EdgeTTS } = require('edge-tts-node'); // Premium Voice Engine Node
+const { Pip } = require('@mr-hope/edge-tts'); // 🔥 FIXED: Absolute standard library module linking
 
 const app = express();
 
@@ -139,8 +139,8 @@ app.post('/tts-stream', async (req, res) => {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
 
-    // Initialize edge-tts-node engine
-    const tts = new EdgeTTS();
+    // Initialize @mr-hope/edge-tts client
+    const tts = new Pip();
 
     // 🎯 PREMIUM VOICES SELECTION MATRIX
     let voiceTarget = 'en-US-AndrewNeural'; // English Default
@@ -151,25 +151,24 @@ app.post('/tts-stream', async (req, res) => {
     else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
     else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
 
-    console.log(`[Narrato Speech Engine] Fetching dynamic safe base64 buffer for: ${voiceTarget}`);
+    console.log(`[Narrato Speech Engine] Requesting audio data from Microsoft Cloud for: ${voiceTarget}`);
 
-    // 🔥 FIXED: edge-tts-node ka pin-pointed async await audio composition method
-    const audioBuffer = await tts.audio({
+    // 🔥 FIXED: Direct synchronous buffer generation from the Pip client
+    const audioBuffer = await tts.toBuffer({
         text: text,
         voice: voiceTarget
     });
 
-    // Final response safety check
     if (!audioBuffer || audioBuffer.length === 0) {
-        throw new Error("Core library generated an empty audio buffer block.");
+        throw new Error("Core library generated an empty audio block.");
     }
 
-    // Direct stream configuration injection
+    // Direct response stream definitions
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Length', audioBuffer.length);
     res.setHeader('Cache-Control', 'no-cache');
 
-    // Send the absolute solid binary audio file back to frontend
+    // Send absolute solid binary audio file back to frontend
     res.send(audioBuffer);
 
   } catch (err) {
