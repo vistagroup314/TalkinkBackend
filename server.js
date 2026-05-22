@@ -128,7 +128,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 BULLETPROOF RE-ROUTE: HIGH-SPEED BYPASS GOOGLE SPEECH GATEWAY
+// 🔊 OPTIMIZED: HIGH-SPEED TEXT CHUNKING GOOGLE SPEECH GATEWAY
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -138,7 +138,6 @@ app.post('/tts-stream', async (req, res) => {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
 
-    // Locale normalization matrix
     let targetLocale = 'en';
     if (lang === 'hi') targetLocale = 'hi';
     else if (lang === 'or') targetLocale = 'or';
@@ -146,34 +145,75 @@ app.post('/tts-stream', async (req, res) => {
     else if (lang === 'es') targetLocale = 'es';
     else if (lang === 'fr') targetLocale = 'fr';
 
-    console.log(`[Narrato Core Engine] Fetching stable chunk stream for language code: ${targetLocale}`);
+    console.log(`[Narrato Core Engine] Chunking text for language code: ${targetLocale}`);
 
-    // Build standard high-authority API request url
-    const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLocale}&client=tw-ob&q=${encodeURIComponent(text)}`;
+    // 🔥 SMART FIX: Break paragraph into clean sentences safely
+    const sentences = text.match(/[^.!?]+[.!?]*|.+/g) || [text];
+    let subChunks = [];
 
-    const requestOptions = {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://translate.google.com/'
+    for (let sentence of sentences) {
+      sentence = sentence.trim();
+      if (!sentence) continue;
+
+      // If any single sentence still breaks the 150 char limit, split it by spaces
+      while (sentence.length > 150) {
+        let part = sentence.substring(0, 150);
+        let lastSpace = part.lastIndexOf(' ');
+        if (lastSpace > 50) {
+          part = sentence.substring(0, lastSpace);
+        }
+        subChunks.push(part);
+        sentence = sentence.substring(part.length).trim();
       }
-    };
+      if (sentence) subChunks.push(sentence);
+    }
 
-    // Trigger explicit secure get handshake
-    https.get(googleTtsUrl, requestOptions, (googleRes) => {
-      if (googleRes.statusCode === 200) {
-        // Force fully streamable headers directly back to the app player
-        res.setHeader('Content-Type', 'audio/mpeg');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Transfer-Encoding', 'chunked');
-        
-        // Pipe the live buffer array stream smoothly
-        googleRes.pipe(res);
-      } else {
-        res.status(500).json({ success: false, error: `Google cloud rejected stream with status: ${googleRes.statusCode}` });
+    // Set chunked streaming content-type headers for real-time play
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    let currentStreamIndex = 0;
+
+    // Sequential recursion helper to keep piping audio fragments
+    function streamNextChunk() {
+      if (currentStreamIndex >= subChunks.length) {
+        return res.end(); // Successfully finished transferring all blocks
       }
-    }).on('error', (err) => {
-      res.status(500).json({ success: false, error: err.message });
-    });
+
+      const currentText = subChunks[currentStreamIndex];
+      const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLocale}&client=tw-ob&q=${encodeURIComponent(currentText)}`;
+
+      const requestOptions = {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://translate.google.com/'
+        }
+      };
+
+      https.get(googleTtsUrl, requestOptions, (googleRes) => {
+        if (googleRes.statusCode === 200) {
+          // Stream raw buffer chunks to response directly without closing 'res'
+          googleRes.on('data', (chunk) => res.write(chunk));
+          googleRes.on('end', () => {
+            currentStreamIndex++;
+            streamNextChunk(); // Chain to the next clean sentence chunk
+          });
+        } else {
+          console.error(`Google rejected chunk stream. Status code: ${googleRes.statusCode}`);
+          if (!res.headersSent) {
+            res.status(500).json({ success: false, error: `Cloud sync break at index ${currentStreamIndex}` });
+          }
+        }
+      }).on('error', (err) => {
+        if (!res.headersSent) {
+          res.status(500).json({ success: false, error: err.message });
+        }
+      });
+    }
+
+    // Fire the initial chunk stream sequence
+    streamNextChunk();
 
   } catch (err) {
     console.error("❌ High-Speed Vocal Engine Fault:", err);
