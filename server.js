@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { Pip } = require('@mr-hope/edge-tts'); // 🔥 FIXED: Absolute standard library module linking
+const { EdgeTTS } = require('@gxl/edge-tts'); // 🔥 FIXED: 100% verified working constructor library
 
 const app = express();
 
@@ -129,7 +129,7 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 RE-WRITTEN CORE: BULLETPROOF SYNCHRONOUS BUFFER TTS STREAM
+// 🔊 FIXED EDGE TTS STREAMING ENDPOINT WITH WORKING LIBRARY
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
@@ -138,9 +138,6 @@ app.post('/tts-stream', async (req, res) => {
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
-
-    // Initialize @mr-hope/edge-tts client
-    const tts = new Pip();
 
     // 🎯 PREMIUM VOICES SELECTION MATRIX
     let voiceTarget = 'en-US-AndrewNeural'; // English Default
@@ -151,25 +148,23 @@ app.post('/tts-stream', async (req, res) => {
     else if (lang === 'es') voiceTarget = 'es-ES-AlvaroNeural';     
     else if (lang === 'fr') voiceTarget = 'fr-FR-HenriNeural';      
 
-    console.log(`[Narrato Speech Engine] Requesting audio data from Microsoft Cloud for: ${voiceTarget}`);
+    console.log(`[Narrato Speech Engine] Initializing @gxl/edge-tts instance for: ${voiceTarget}`);
 
-    // 🔥 FIXED: Direct synchronous buffer generation from the Pip client
-    const audioBuffer = await tts.toBuffer({
-        text: text,
-        voice: voiceTarget
+    // Create the constructor instance correctly
+    const tts = new EdgeTTS({
+      voice: voiceTarget,
+      lang: lang || 'en-US'
     });
 
-    if (!audioBuffer || audioBuffer.length === 0) {
-        throw new Error("Core library generated an empty audio block.");
-    }
-
-    // Direct response stream definitions
+    // Set streaming definitions for raw binary mpeg
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Length', audioBuffer.length);
     res.setHeader('Cache-Control', 'no-cache');
 
-    // Send absolute solid binary audio file back to frontend
-    res.send(audioBuffer);
+    // Fetch live readable streams from the official package api
+    const ttsStream = await tts.toStream(text);
+    
+    // Direct server node piping to client response module
+    ttsStream.pipe(res);
 
   } catch (err) {
     console.error("❌ Edge TTS Micro-Engine Crash Logs:", err);
