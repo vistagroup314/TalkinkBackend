@@ -233,3 +233,77 @@ app.post('/tts-stream', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Production Engine active on port ${PORT}`));
+
+
+
+
+
+
+
+
+// ==========================================================================
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (GEMINI FREE TIER)
+// ==========================================================================
+app.post('/smart-psychology-search', async (req, res) => {
+    try {
+        const { query } = req.body;
+
+        if (!query || query.trim().length === 0) {
+            return res.status(400).json({ success: false, error: "Query context matrix is missing." });
+        }
+
+        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology for: "${query}"`);
+
+        // 🔥 CRITICAL: Replace 'YOUR_FREE_GEMINI_API_KEY' with your real API key from Google AI Studio
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_FREE_GEMINI_API_KEY`;
+
+        const promptPayload = {
+            contents: [{
+                parts: [{
+                    text: `You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind this search query: "${query}".
+                    Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
+                    
+                    Strict Rules:
+                    1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json).
+                    2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]
+                    3. Example Input: "money management" -> Output: ["Behavioral Economics", "Delayed Gratification", "Scarcity Mindset", "Risk Aversion Matrix", "Financial Sociology"]`
+                }]
+            }]
+        };
+
+        const response = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(promptPayload)
+        });
+
+        // Agar 429 Too Many Requests aata hai toh direct catch block me push karein
+        if (!response.ok) {
+            throw new Error(`API_RATE_LIMIT_OR_FAULT_STATUS_${response.status}`);
+        }
+
+        const data = await response.json();
+        let rawJsonText = data.candidates[0].content.parts[0].text.trim();
+        
+        // Anti-formatting cleanup to keep JSON parsing bulletproof
+        if (rawJsonText.startsWith("```")) {
+            rawJsonText = rawJsonText.replace(/```json|```/g, "").trim();
+        }
+
+        const psychologicalKeywords = JSON.parse(rawJsonText);
+        
+        return res.status(200).json({ 
+            success: true, 
+            mode: "premium_ai", 
+            suggestions: psychologicalKeywords 
+        });
+
+    } catch (err) {
+        console.warn("⚠️ [Cognitive Engine] Fallback triggered due to API rate limit or error:", err.message);
+        // Backend failure response so frontend can instantly handle fallback local operations
+        return res.status(429).json({ 
+            success: false, 
+            error: "Rate limit reached or server busy. Deploying custom fuzzy engine fallback." 
+        });
+    }
+});
