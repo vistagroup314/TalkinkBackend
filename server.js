@@ -39,6 +39,14 @@ function makeHttpsRequest(options, payloadData) {
 }
 
 // ==========================================================================
+// ⚡ SILENT BACKGROUND SERVER WAKEUP PING ENDPOINT
+// ==========================================================================
+app.get('/ping', (req, res) => {
+   console.log("⚡ [Narrato Lifecycle] Silent wakeup handshake received. Server is awake!");
+   res.status(200).send("WOKE_UP");
+});
+
+// ==========================================================================
 // 💳 EXISTING INSTAMOJO ORDER CREATION ROUTE
 // ==========================================================================
 app.post('/create-order', async (req, res) => {
@@ -148,7 +156,7 @@ app.post('/tts-stream', async (req, res) => {
     console.log(`[Narrato Core Engine] Chunking text for language code: ${targetLocale}`);
 
     // 🔥 SMART FIX: Break paragraph into clean sentences safely
-    const sentences = text.match(/[^.!?]+[.!?]*|.+/g) || [text];
+    const sentences = text.match(/[^.!?।]+[.!?门]?/g) || [text];
     let subChunks = [];
 
     for (let sentence of sentences) {
