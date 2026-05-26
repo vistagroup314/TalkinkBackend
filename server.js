@@ -136,60 +136,70 @@ app.post('/instamojo-webhook', (req, res) => {
 
 
 // ==========================================================================
-// 🔊 OPTIMIZED: HIGH-SPEED TEXT CHUNKING GOOGLE SPEECH GATEWAY
+// 🔊 UPDATED: HIGH-SPEED TEXT CHUNKING GOOGLE SPEECH GATEWAY (WITH GENDER CONTROL)
 // ==========================================================================
 app.post('/tts-stream', async (req, res) => {
   try {
-    const { text, lang } = req.body;
+    // 1. Frontend se 'gender' parameter bhi accept karo (Default 'female' rahega)
+    const { text, lang, gender } = req.body; 
 
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ success: false, error: "Text chunk matrix is missing." });
     }
 
     let targetLocale = 'en';
-    if (lang === 'hi') targetLocale = 'hi';
-    else if (lang === 'or') targetLocale = 'or';
-    else if (lang === 'bn') targetLocale = 'bn';
-    else if (lang === 'es') targetLocale = 'es';
+    const selectedGender = gender || 'female';
+
+    // 2. Simple Language + Gender Locale Mapper
+    if (lang === 'hi') {
+      // Hindi: hi (Standard Female) | hi-IN (Male Variant support context)
+      targetLocale = (selectedGender === 'male') ? 'hi-IN' : 'hi';
+    } 
+    else if (lang === 'en') {
+      // English: en-US (Female) | en-GB (Male)
+      targetLocale = (selectedGender === 'male') ? 'en-GB' : 'en-US';
+    }
+    else if (lang === 'or') targetLocale = 'or'; // Odia (Single standard voice)
+    else if (lang === 'bn') targetLocale = 'bn'; // Bengali
+    else if (lang === 'es') {
+      // Spanish: es-ES (Female) | es-US (Male)
+      targetLocale = (selectedGender === 'male') ? 'es-US' : 'es-ES';
+    }
     else if (lang === 'fr') targetLocale = 'fr';
 
-    console.log(`[Narrato Core Engine] Chunking text for language code: ${targetLocale}`);
+    console.log(`[Narrato Core Engine] Chunking text for: ${targetLocale} (${selectedGender})`);
 
-    // 🔥 SMART FIX: Break paragraph into clean sentences safely
+    // 🔥 BAQI KA POORA SKELETON CODE BILKUL SEAME RAHEGA...
+    // (Jo tumhara subChunks loop, res.setHeader, aur streamNextChunk function hai, use bilkul mat chhedna)
+    
     const sentences = text.match(/[^.!?।]+[.!?门]?/g) || [text];
     let subChunks = [];
-
     for (let sentence of sentences) {
       sentence = sentence.trim();
       if (!sentence) continue;
-
-      // If any single sentence still breaks the 150 char limit, split it by spaces
       while (sentence.length > 150) {
         let part = sentence.substring(0, 150);
         let lastSpace = part.lastIndexOf(' ');
-        if (lastSpace > 50) {
-          part = sentence.substring(0, lastSpace);
-        }
+        if (lastSpace > 50) part = sentence.substring(0, lastSpace);
         subChunks.push(part);
         sentence = sentence.substring(part.length).trim();
       }
       if (sentence) subChunks.push(sentence);
     }
 
-    // Set chunked streaming content-type headers for real-time play
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Transfer-Encoding', 'chunked');
 
     let currentStreamIndex = 0;
 
-    // Sequential recursion helper to keep piping audio fragments
     function streamNextChunk() {
       if (currentStreamIndex >= subChunks.length) {
-        return res.end(); // Successfully finished transferring all blocks
+        return res.end();
       }
 
       const currentText = subChunks[currentStreamIndex];
+      // Updated targetLocale used here dynamically
       const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLocale}&client=tw-ob&q=${encodeURIComponent(currentText)}`;
 
       const requestOptions = {
@@ -201,40 +211,27 @@ app.post('/tts-stream', async (req, res) => {
 
       https.get(googleTtsUrl, requestOptions, (googleRes) => {
         if (googleRes.statusCode === 200) {
-          // Stream raw buffer chunks to response directly without closing 'res'
           googleRes.on('data', (chunk) => res.write(chunk));
           googleRes.on('end', () => {
             currentStreamIndex++;
-            streamNextChunk(); // Chain to the next clean sentence chunk
+            streamNextChunk();
           });
         } else {
           console.error(`Google rejected chunk stream. Status code: ${googleRes.statusCode}`);
-          if (!res.headersSent) {
-            res.status(500).json({ success: false, error: `Cloud sync break at index ${currentStreamIndex}` });
-          }
+          if (!res.headersSent) res.status(500).json({ success: false, error: `Cloud sync break at index ${currentStreamIndex}` });
         }
       }).on('error', (err) => {
-        if (!res.headersSent) {
-          res.status(500).json({ success: false, error: err.message });
-        }
+        if (!res.headersSent) res.status(500).json({ success: false, error: err.message });
       });
     }
 
-    // Fire the initial chunk stream sequence
     streamNextChunk();
 
   } catch (err) {
     console.error("❌ High-Speed Vocal Engine Fault:", err);
-    if (!res.headersSent) {
-      res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
-    }
+    if (!res.headersSent) res.status(500).json({ success: false, error: err.message || "Cloud vocal pipeline synchronization failed." });
   }
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Production Engine active on port ${PORT}`));
-
-
 
 
 
