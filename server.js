@@ -261,10 +261,9 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ NEW HOOK: AUTOMATED AI STORY EXPLANATION AUDIO GATEWAY (WITH SMART FALLBACK)
+// ✨ NEW HOOK: AUTOMATED AI STORY EXPLANATION AUDIO GATEWAY (STABLE DYNAMIC)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
-  let processedStoryText = "";
   const { text, lang } = req.body;
   const selectedLanguage = lang === 'hi' ? 'hi' : 'en';
 
@@ -274,18 +273,19 @@ app.post('/tts-ai-explain', async (req, res) => {
 
   try {
     const activeKey = getActiveGeminiKey();
-    console.log(`🤖 [AI Explanation Deck] Attempting Gemini 3 Generation layer...`);
+    console.log(`🤖 [AI Explanation Deck] Processing with Stable Gemini 1.5 Flash...`);
 
     let systemInstruction = "";
     if (selectedLanguage === 'hi') {
       systemInstruction = `तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी भी बोरिंग या जटिल विषय को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि एक छोटा बच्चा भी उसे आसानी से और मजे से समझ जाए। दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे बातचीत कर रहे हो।`;
+      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोдक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे बातचीत कर रहे हो।`;
     } else {
       systemInstruction = `You are a highly engaging, friendly, and brilliant mentor. Your specialty is turning complex or dry academic book texts into extremely simple, captivating, and conversational stories so that even a child can grasp the concepts naturally with interest. Read the provided book page text and explain it in this friendly storytelling voice.
       Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.`;
     }
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${activeKey}`;
+    // Standard URL targeting the stable 1.5 flash model
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
     const promptPayload = {
       contents: [{
@@ -302,25 +302,13 @@ app.post('/tts-ai-explain', async (req, res) => {
     });
 
     if (!geminiResponse.ok) {
-      throw new Error(`STATUS_${geminiResponse.status}`);
+      throw new Error(`Gemini core processor pool rejected request with status: ${geminiResponse.status}`);
     }
 
     const geminiData = await geminiResponse.json();
-    processedStoryText = geminiData.candidates[0].content.parts[0].text.trim();
+    const processedStoryText = geminiData.candidates[0].content.parts[0].text.trim();
 
-  } catch (err) {
-    console.warn("⚠️ [Gemini Error Fallback Block Activated]:", err.message);
-    // 🛠️ SMART ULTRA-SMOOTH FALLBACK: Key block blocked hone par ye text generate karega automatically!
-    if (selectedLanguage === 'hi') {
-      processedStoryText = `अरे भाई! देखो इस पेज में बहुत ही कमाल की बात बताई गई है। संक्षेप में कहें तो, यह टॉपिक हमें सिखाता है कि कैसे चीज़ें काम करती हैं। सीधे शब्दों में समझें तो, इसका मुख्य पॉइंट यह है कि हमें प्रैक्टिकल होकर सोचना चाहिए। चलिए इस पॉइंट को एक बार फिर से अच्छे से रिवाइज कर लेते हैं ताकि सब कुछ क्रिस्टल क्लियर हो जाए!`;
-    } else {
-      processedStoryText = `Hey friend! Let's break down this page content very quickly. In simple terms, this section explains the core mechanics of the topic. The main takeaway here is that we need to analyze things practically. Let's review this core idea together to make it perfectly clear!`;
-    }
-  }
-
-  // Final compilation and conversion to Base64 (Will always run flawlessly)
-  try {
-    console.log(`🔊 [AI Voice Compilation] Converting story transcript into binary blocks.`);
+    console.log(`🔊 [AI Voice Compilation] Converting dynamic story transcript into binary blocks.`);
     const sentences = processedStoryText.match(/[^.!?।]+[.!?门]?/g) || [processedStoryText];
     let aiSubChunks = [];
 
@@ -359,14 +347,15 @@ app.post('/tts-ai-explain', async (req, res) => {
       audioBlobBase64: base64AudioData
     });
 
-  } catch (audioErr) {
-    return res.status(500).json({ success: false, error: audioErr.message });
+  } catch (err) {
+    console.error("❌ Critical breakdown in AI Explanation route:", err);
+    return res.status(500).json({ success: false, error: err.message || "Internal Engine error inside AI channel." });
   }
 });
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (WITH FALLBACK)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (STABLE FLASH)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -376,15 +365,21 @@ app.post('/smart-psychology-search', async (req, res) => {
             return res.status(400).json({ success: false, error: "Query context matrix is missing." });
         }
 
-        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology.`);
+        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology using Gemini 1.5 Flash.`);
         const activeKey = getActiveGeminiKey();
         
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${activeKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
         const promptPayload = {
             contents: [{
                 parts: [{
-                    text: `You are an expert academic research psychologist and librarian. Analyze the core intent behind this query: "${query}". Provide a clean JSON string array containing 5 lateral concepts. Return ONLY a valid JSON string array.`
+                    text: `You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind this search query: "${query}".
+                    Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
+                    
+                    Strict Rules:
+                    1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json).
+                    2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]
+                    3. Example Input: "money management" -> Output: ["Behavioral Economics", "Delayed Gratification", "Scarcity Mindset", "Risk Aversion Matrix", "Financial Sociology"]`
                 }]
             }]
         };
@@ -396,7 +391,7 @@ app.post('/smart-psychology-search', async (req, res) => {
         });
 
         if (!response.ok) {
-            throw new Error(`STATUS_${response.status}`);
+            throw new Error(`API_FAULT_STATUS_${response.status}`);
         }
 
         const data = await response.json();
@@ -410,12 +405,10 @@ app.post('/smart-psychology-search', async (req, res) => {
         return res.status(200).json({ success: true, mode: "premium_ai", suggestions: psychologicalKeywords });
 
     } catch (err) {
-        console.warn("⚠️ [Cognitive Engine] Fallback triggered due to restriction or error.");
-        // Static clean fallback tags if 403 hits
-        return res.status(200).json({ 
-            success: true, 
-            mode: "fallback_fuzzy", 
-            suggestions: ["Cognitive Analysis", "Behavioral Patterns", "Mental Models", "Research Synthesis", "Focus Optimization"] 
+        console.warn("⚠️ [Cognitive Engine] Fallback triggered:", err.message);
+        return res.status(429).json({ 
+            success: false, 
+            error: "Rate limit reached or server busy. Deploying custom fuzzy engine fallback." 
         });
     }
 });
