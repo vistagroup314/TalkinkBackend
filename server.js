@@ -20,10 +20,10 @@ const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6
 
 // 🔥 PREMIUM GEMINI MULTI-KEY ROTATION MATRIX POOL
 const GEMINI_KEYS_POOL = [
-  'AIzaSyAPiZ4RiF1ekeg8duWDUtgp9ydcZEZhTkQ',
-  'AIzaSyDm7XNhYo6Bn4BqMHFwcLhoEPWy6gHdHrg',
-  'AIzaSyBoJ4DeqDr_PQpw-ZrP2MwFR4Fiu7iJrM4',
-  'AIzaSyAewDQ2Opx4NBuCWycGtfEHj1Q_HnyUPg4'
+
+  AIzaSyDt1OChfXK-_tDT-sNNpVjyjVy6L5FvLtw, 
+
+  
 ];
 let currentKeyIndex = 0;
 
