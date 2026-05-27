@@ -18,16 +18,15 @@ app.use(express.urlencoded({ extended: true }));
 const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
 const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
 
-// 🔥 PREMIUM GEMINI MULTI-KEY ROTATION MATRIX POOL
+// 🔥 PREMIUM GEMINI MULTI-KEY ROTATION MATRIX POOL (Updated with your fresh key)
 const GEMINI_KEYS_POOL = [
-  'AIzaSyDt1OChfXK-_tDT-sNNpVjyjVy6L5FvLtw' // Tumhari ekdum fresh key bina kisi syntax galti ke!
+  'AIzaSyDt1OChfXK-_tDT-sNNpVjyjVy6L5FvLtw'
 ];
 let currentKeyIndex = 0;
 
 // Helper to get active rotated key from pool array
 function getActiveGeminiKey() {
   const activeKey = GEMINI_KEYS_POOL[currentKeyIndex];
-  // Round-robin shift for the next transaction block execution
   currentKeyIndex = (currentKeyIndex + 1) % GEMINI_KEYS_POOL.length;
   return activeKey;
 }
@@ -268,7 +267,7 @@ app.post('/tts-stream', async (req, res) => {
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   try {
-    const { text, lang } = req.body; // lang will be 'hi' or 'en'
+    const { text, lang } = req.body;
 
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ success: false, error: "Raw page stream text context is missing." });
@@ -277,9 +276,8 @@ app.post('/tts-ai-explain', async (req, res) => {
     const selectedLanguage = lang === 'hi' ? 'hi' : 'en';
     const activeKey = getActiveGeminiKey();
 
-    console.log(`🤖 [AI Explanation Deck] Processing core stream. Rotating active key index layer.`);
+    console.log(`🤖 [AI Explanation Deck] Processing core stream with Gemini 3 Flash Preview.`);
 
-    // Strict contextual system profiling prompt matrices
     let systemInstruction = "";
     if (selectedLanguage === 'hi') {
       systemInstruction = `तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी भी बोरिंग या जटिल विषय को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि एक छोटा बच्चा भी उसे आसानी से और मजे से समझ जाए। दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
@@ -289,8 +287,8 @@ app.post('/tts-ai-explain', async (req, res) => {
       Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.`;
     }
 
-    // 🛠️ ABSOLUTE STABLE ROUTE FIX: v1beta explicit model mapping path
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+    // 🔥 MODEL UPDATED TO GEMINI 3 FLASH PREVIEW
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${activeKey}`;
 
     const promptPayload = {
       contents: [{
@@ -300,7 +298,6 @@ app.post('/tts-ai-explain', async (req, res) => {
       }]
     };
 
-    // 1. Trigger Google Gemini AI Pipeline Layer
     const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -316,7 +313,6 @@ app.post('/tts-ai-explain', async (req, res) => {
 
     console.log(`🔊 [AI Voice Compilation] Converting story transcript into high-quality binary blocks.`);
 
-    // 2. Fragment the generated story script into safe lengths (<150 chars) for standard Google TTS parameters
     const sentences = processedStoryText.match(/[^.!?।]+[.!?门]?/g) || [processedStoryText];
     let aiSubChunks = [];
 
@@ -336,23 +332,19 @@ app.post('/tts-ai-explain', async (req, res) => {
       if (sentence) aiSubChunks.push(sentence);
     }
 
-    // 3. Compile speech components synchronously sequentially into a single absolute audio binary block buffer
     const bufferArray = [];
     for (let chunk of aiSubChunks) {
       try {
         const chunkBuffer = await fetchTtsBuffer(chunk, selectedLanguage);
         bufferArray.push(chunkBuffer);
       } catch (streamError) {
-        console.error("Partial frame dropout during compilation sequence, bypassing fragment safely:", streamError.message);
+        console.error("Partial frame dropout safely bypassed:", streamError.message);
       }
     }
 
     const finalCombinedAudioBuffer = Buffer.concat(bufferArray);
-
-    // Convert complete absolute binary array bundle to highly portable Base64 matrix structure
     const base64AudioData = finalCombinedAudioBuffer.toString('base64');
 
-    // 4. Return unified combined payload parameters back to frontend frame pipeline
     return res.status(200).json({
       success: true,
       explanationText: processedStoryText,
@@ -360,14 +352,14 @@ app.post('/tts-ai-explain', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Critical breakdown in AI Explanation route pipeline execution:", err);
+    console.error("❌ Critical breakdown in AI Explanation route:", err);
     return res.status(500).json({ success: false, error: err.message || "Internal Engine error inside AI channel." });
   }
 });
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (GEMINI POOL DRIVEN)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (GEMINI 3 POWERED)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -377,12 +369,12 @@ app.post('/smart-psychology-search', async (req, res) => {
             return res.status(400).json({ success: false, error: "Query context matrix is missing." });
         }
 
-        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology for: "${query}"`);
+        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology using Gemini 3.`);
 
         const activeKey = getActiveGeminiKey();
         
-        // 🛠️ ABSOLUTE STABLE ROUTE FIX: v1beta explicit model mapping path
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+        // 🔥 MODEL UPDATED TO GEMINI 3 FLASH PREVIEW
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${activeKey}`;
 
         const promptPayload = {
             contents: [{
@@ -405,7 +397,7 @@ app.post('/smart-psychology-search', async (req, res) => {
         });
 
         if (!response.ok) {
-            throw new Error(`API_RATE_LIMIT_OR_FAULT_STATUS_${response.status}`);
+            throw new Error(`API_FAULT_STATUS_${response.status}`);
         }
 
         const data = await response.json();
@@ -424,10 +416,10 @@ app.post('/smart-psychology-search', async (req, res) => {
         });
 
     } catch (err) {
-        console.warn("⚠️ [Cognitive Engine] Fallback triggered due to API rate limit or error:", err.message);
+        console.warn("⚠️ [Cognitive Engine] Fallback triggered:", err.message);
         return res.status(429).json({ 
             success: false, 
-            error: "Rate limit reached or server busy. Deploying custom fuzzy engine fallback." 
+            error: "Rate limit reached or server busy." 
         });
     }
 });
