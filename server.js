@@ -261,7 +261,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (CORRECT STRUCTURE FOR v1 API)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (FIXED JSON FORMAT)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -273,7 +273,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
   try {
     const activeKey = getActiveGeminiKey();
-    console.log(`🤖 [AI Genuine Deck] Connecting via Official Production v1 Endpoint Structure...`);
+    console.log(`🤖 [AI Genuine Deck] Connecting via REST v1 system_instruction format...`);
 
     let systemInstructionText = "";
     if (selectedLanguage === 'hi') {
@@ -284,14 +284,14 @@ app.post('/tts-ai-explain', async (req, res) => {
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
-    // 🛠️ FIX: Clean payload structure accepted by official v1 endpoint
+    // 🛠️ FIX: Changed systemInstruction to system_instruction for strict REST payload compatibility
     const promptPayload = {
       contents: [{
         parts: [{
-          text: `Please explain this content based on your system persona instructions:\n\n"${text}"`
+          text: `Read this page data and explain it: \n\n"${text}"`
         }]
       }],
-      systemInstruction: {
+      system_instruction: {
         parts: [{
           text: systemInstructionText
         }]
@@ -359,7 +359,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (PRODUCTION v1 PATH)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (FIXED JSON FORMAT)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -369,19 +369,19 @@ app.post('/smart-psychology-search', async (req, res) => {
             return res.status(400).json({ success: false, error: "Query context matrix is missing." });
         }
 
-        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology via v1 Core...`);
+        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology via REST v1 system_instruction...`);
         const activeKey = getActiveGeminiKey();
         
         const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
-        // 🛠️ FIX: Clean payload structure for psychology route
+        // 🛠️ FIX: Changed systemInstruction to system_instruction for strict REST payload compatibility
         const promptPayload = {
             contents: [{
                 parts: [{
                     text: `Analyze the core intellectual, psychological, and theoretical intent behind this search query: "${query}". Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.`
                 }]
             }],
-            systemInstruction: {
+            system_instruction: {
                 parts: [{
                     text: `You are an expert academic research psychologist and librarian. Strict Rules: 1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json). 2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]`
                 }]
