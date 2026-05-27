@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
 const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
 
-// 🔥 GENUINE GEMINI API KEY POOL (Paste your fresh key here)
+// 🔥 GENUINE GEMINI API KEY POOL
 const GEMINI_KEYS_POOL = [
   'AIzaSyDt1OChfXK-_tDT-sNNpVjyjVy6L5FvLtw'
 ];
@@ -261,7 +261,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC REAL-TIME AI STORY EXPLANATION GATEWAY (PRODUCTION API v1)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (CORRECT STRUCTURE FOR v1 API)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -273,26 +273,29 @@ app.post('/tts-ai-explain', async (req, res) => {
 
   try {
     const activeKey = getActiveGeminiKey();
-    console.log(`🤖 [AI Genuine Deck] Connecting directly via Official Production v1 Endpoint...`);
+    console.log(`🤖 [AI Genuine Deck] Connecting via Official Production v1 Endpoint Structure...`);
 
-    let systemInstruction = "";
+    let systemInstructionText = "";
     if (selectedLanguage === 'hi') {
-      systemInstruction = `तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी भी बोरिंग या जटिल विषय को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि एक छोटा बच्चा भी उसे आसानी से और मजे से समझ जाए। दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे बातचीत कर रहे हो।`;
+      systemInstructionText = `तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी भी बोरिंग या जटिल विषय को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि एक छोटा बच्चा भी उसे आसानी से और मजे से समझ जाए। दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे बातचीत कर रहे हो।`;
     } else {
-      systemInstruction = `You are a highly engaging, friendly, and brilliant mentor. Your specialty is turning complex or dry academic book texts into extremely simple, captivating, and conversational stories so that even a child can grasp the concepts naturally with interest. Read the provided book page text and explain it in this friendly storytelling voice.
-      Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.`;
+      systemInstructionText = `You are a highly engaging, friendly, and brilliant mentor. Your specialty is turning complex or dry academic book texts into extremely simple, captivating, and conversational stories so that even a child can grasp the concepts naturally with interest. Read the provided book page text and explain it in this friendly storytelling voice. Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.`;
     }
 
-    // 🌐 CHANGED TO OFFICIAL v1 PRODUCTION PATH (Bypasses the restrictive beta paths)
     const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
+    // 🛠️ FIX: Clean payload structure accepted by official v1 endpoint
     const promptPayload = {
       contents: [{
         parts: [{
-          text: `${systemInstruction}\n\nBook Page Text Source Data:\n"${text}"`
+          text: `Please explain this content based on your system persona instructions:\n\n"${text}"`
         }]
-      }]
+      }],
+      systemInstruction: {
+        parts: [{
+          text: systemInstructionText
+        }]
+      }
     };
 
     const geminiResponse = await fetch(geminiUrl, {
@@ -302,7 +305,8 @@ app.post('/tts-ai-explain', async (req, res) => {
     });
 
     if (!geminiResponse.ok) {
-      throw new Error(`Gemini core pipeline rejected with status: ${geminiResponse.status}`);
+      const errorData = await geminiResponse.text();
+      throw new Error(`Gemini core pipeline rejected with status: ${geminiResponse.status}. Details: ${errorData}`);
     }
 
     const geminiData = await geminiResponse.json();
@@ -368,21 +372,20 @@ app.post('/smart-psychology-search', async (req, res) => {
         console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology via v1 Core...`);
         const activeKey = getActiveGeminiKey();
         
-        // 🌐 CHANGED TO OFFICIAL v1 PRODUCTION PATH
         const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
+        // 🛠️ FIX: Clean payload structure for psychology route
         const promptPayload = {
             contents: [{
                 parts: [{
-                    text: `You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind this search query: "${query}".
-                    Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
-                    
-                    Strict Rules:
-                    1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json).
-                    2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]
-                    3. Example Input: "money management" -> Output: ["Behavioral Economics", "Delayed Gratification", "Scarcity Mindset", "Risk Aversion Matrix", "Financial Sociology"]`
+                    text: `Analyze the core intellectual, psychological, and theoretical intent behind this search query: "${query}". Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.`
                 }]
-            }]
+            }],
+            systemInstruction: {
+                parts: [{
+                    text: `You are an expert academic research psychologist and librarian. Strict Rules: 1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json). 2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]`
+                }]
+            }
         };
 
         const response = await fetch(geminiUrl, {
