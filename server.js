@@ -18,17 +18,15 @@ app.use(express.urlencoded({ extended: true }));
 const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
 const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
 
-// 🔥 GENUINE GEMINI API KEY POOL
-// 🚨 REPLACING THIS KEY WITH A FRESH ONE IS MANDATORY TO FIX THE 400 INVALID_KEY ERROR 🚨
-const GEMINI_KEYS_POOL = [
-  'AIzaSyDt1OChfXK-_tDT-sNNpVjyjVy6L5FvLtw' // <-- Iske jagah apni nayi key daalo bhai!
-];
-let currentKeyIndex = 0;
-
+// 🔥 ULTRA-SAFE PRODUCTION KEY MANAGEMENT
 function getActiveGeminiKey() {
-  const activeKey = GEMINI_KEYS_POOL[currentKeyIndex].trim();
-  currentKeyIndex = (currentKeyIndex + 1) % GEMINI_KEYS_POOL.length;
-  return activeKey;
+  // Yeh Render ke Environment settings se live secure key uthayega
+  const activeKey = process.env.GEMINI_API_KEY;
+  
+  if (!activeKey) {
+    console.error("❌ Critical: GEMINI_API_KEY is missing in Render Environment settings!");
+  }
+  return activeKey ? activeKey.trim() : "";
 }
 
 function makeHttpsRequest(options, payloadData) {
@@ -262,7 +260,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (DUAL-KEY-PASS ARCHITECTURE)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (SECURE ENVIRONMENT PATH)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -272,14 +270,18 @@ app.post('/tts-ai-explain', async (req, res) => {
     return res.status(400).json({ success: false, error: "Raw page stream text context is missing." });
   }
 
+  const activeKey = getActiveGeminiKey();
+  if (!activeKey) {
+    return res.status(500).json({ success: false, error: "AI pipeline authentication reference is missing on host." });
+  }
+
   try {
-    const activeKey = getActiveGeminiKey();
-    console.log(`🤖 [AI Genuine Deck] Connecting to Gemini v1 endpoint...`);
+    console.log(`🤖 [AI Genuine Deck] Connecting via Secure Environment Key mapping...`);
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
       embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोдक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
+      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
       
       BOOK PAGE TEXT DATA TO EXPLAIN:
       "${text}"`;
@@ -375,9 +377,12 @@ app.post('/smart-psychology-search', async (req, res) => {
             return res.status(400).json({ success: false, error: "Query context matrix is missing." });
         }
 
-        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology...`);
         const activeKey = getActiveGeminiKey();
-        
+        if (!activeKey) {
+            return res.status(500).json({ success: false, error: "AI search pipeline credentials missing." });
+        }
+
+        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology...`);
         const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(activeKey)}`;
 
         const promptPayload = {
