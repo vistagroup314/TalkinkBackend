@@ -261,7 +261,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (FIXED JSON FORMAT)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (EMBEDDED CONTEXT FOR v1)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -273,29 +273,32 @@ app.post('/tts-ai-explain', async (req, res) => {
 
   try {
     const activeKey = getActiveGeminiKey();
-    console.log(`🤖 [AI Genuine Deck] Connecting via REST v1 system_instruction format...`);
+    console.log(`🤖 [AI Genuine Deck] Connecting via Embedded Prompt Format on stable v1...`);
 
-    let systemInstructionText = "";
+    let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
-      systemInstructionText = `तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी भी बोरिंग या जटिल विषय को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि एक छोटा बच्चा भी उसे आसानी से और मजे से समझ जाए। दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे बातचीत कर रहे हो।`;
+      embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
+      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
+      
+      BOOK PAGE TEXT DATA TO EXPLAIN:
+      "${text}"`;
     } else {
-      systemInstructionText = `You are a highly engaging, friendly, and brilliant mentor. Your specialty is turning complex or dry academic book texts into extremely simple, captivating, and conversational stories so that even a child can grasp the concepts naturally with interest. Read the provided book page text and explain it in this friendly storytelling voice. Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.`;
+      embeddedPrompt = `CONTEXT INSTRUCTION: You are a highly engaging, friendly, and brilliant mentor. Your specialty is turning complex or dry academic book texts into extremely simple, captivating, and conversational stories so that anyone can grasp the concepts naturally with interest. Read the provided book page text and explain it in this friendly storytelling voice.
+      Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.
+      
+      BOOK PAGE TEXT DATA TO EXPLAIN:
+      "${text}"`;
     }
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
-    // 🛠️ FIX: Changed systemInstruction to system_instruction for strict REST payload compatibility
+    // 🛠️ FIX: Cleanest standard JSON payload structure, no extra configuration keys to avoid 400 faults
     const promptPayload = {
       contents: [{
         parts: [{
-          text: `Read this page data and explain it: \n\n"${text}"`
+          text: embeddedPrompt
         }]
-      }],
-      system_instruction: {
-        parts: [{
-          text: systemInstructionText
-        }]
-      }
+      }]
     };
 
     const geminiResponse = await fetch(geminiUrl, {
@@ -359,7 +362,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (FIXED JSON FORMAT)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (EMBEDDED FORMAT)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -369,23 +372,23 @@ app.post('/smart-psychology-search', async (req, res) => {
             return res.status(400).json({ success: false, error: "Query context matrix is missing." });
         }
 
-        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology via REST v1 system_instruction...`);
+        console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology via embedded structure...`);
         const activeKey = getActiveGeminiKey();
         
         const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
-        // 🛠️ FIX: Changed systemInstruction to system_instruction for strict REST payload compatibility
         const promptPayload = {
             contents: [{
                 parts: [{
-                    text: `Analyze the core intellectual, psychological, and theoretical intent behind this search query: "${query}". Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.`
+                    text: `INSTRUCTION: You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind the search query provided below. Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
+                    
+                    Strict Rules:
+                    1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json).
+                    2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]
+                    
+                    SEARCH QUERY: "${query}"`
                 }]
-            }],
-            system_instruction: {
-                parts: [{
-                    text: `You are an expert academic research psychologist and librarian. Strict Rules: 1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json). 2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]`
-                }]
-            }
+            }]
         };
 
         const response = await fetch(geminiUrl, {
