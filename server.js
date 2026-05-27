@@ -20,10 +20,7 @@ const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6
 
 // 🔥 PREMIUM GEMINI MULTI-KEY ROTATION MATRIX POOL
 const GEMINI_KEYS_POOL = [
-
-  'AIzaSyDt1OChfXK-_tDT-sNNpVjyjVy6L5FvLtw', 
-
-  
+  'AIzaSyDt1OChfXK-_tDT-sNNpVjyjVy6L5FvLtw' // Tumhari ekdum fresh key bina kisi syntax galti ke!
 ];
 let currentKeyIndex = 0;
 
@@ -286,14 +283,14 @@ app.post('/tts-ai-explain', async (req, res) => {
     let systemInstruction = "";
     if (selectedLanguage === 'hi') {
       systemInstruction = `तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी भी बोरिंग या जटिल विषय को एकदम मजेदार और सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि एक छोटा बच्चा भी उसे आसानी से और मजे से समझ जाए। दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और interception एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे बातचीत कर रहे हो।`;
+      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे बातचीत कर रहे हो।`;
     } else {
       systemInstruction = `You are a highly engaging, friendly, and brilliant mentor. Your specialty is turning complex or dry academic book texts into extremely simple, captivating, and conversational stories so that even a child can grasp the concepts naturally with interest. Read the provided book page text and explain it in this friendly storytelling voice.
       Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.`;
     }
 
-    // 🛠️ ABSOLUTE FIX: Switched matrix to stable v1 production path endpoint
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+    // 🛠️ ABSOLUTE STABLE ROUTE FIX: v1beta explicit model mapping path
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
     const promptPayload = {
       contents: [{
@@ -384,8 +381,8 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         const activeKey = getActiveGeminiKey();
         
-        // 🛠️ ABSOLUTE FIX: Switched matrix to stable v1 production path endpoint
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+        // 🛠️ ABSOLUTE STABLE ROUTE FIX: v1beta explicit model mapping path
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
         const promptPayload = {
             contents: [{
