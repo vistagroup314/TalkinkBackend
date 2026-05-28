@@ -1,30 +1,31 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { OpenAI } = require('openai');
 
 const app = express();
 
+// 1. MIDDLEWARE SETUP
 app.use(cors({
-  origin: '*', 
+  origin: '*',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 2. INSTAMOJO CONFIGURATION
 const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
 const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
 
-function getActiveGeminiKey() {
-  const activeKey = process.env.GEMINI_API_KEY;
-  if (!activeKey) {
-    console.error("❌ Critical: GEMINI_API_KEY is missing in Render Settings!");
-  }
-  return activeKey ? activeKey.trim() : "";
-}
+// 3. AI CLIENT SETUP (DeepSeek via OpenAI SDK)
+// API Key automatically Render environment variable se uthegi
+const client = new OpenAI({
+  baseURL: 'https://api.deepseek.com',
+  apiKey: process.env.DEEPSEEK_API_KEY,
+});
 
+// 4. HELPER: HTTPS REQUEST WRAPPER (For Instamojo)
 function makeHttpsRequest(options, payloadData) {
   return new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
@@ -45,6 +46,7 @@ function makeHttpsRequest(options, payloadData) {
   });
 }
 
+// 5. HELPER: TTS BUFFER GATEWAY
 function fetchTtsBuffer(textChunk, targetLocale) {
   return new Promise((resolve, reject) => {
     const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLocale}&client=tw-ob&q=${encodeURIComponent(textChunk)}`;
@@ -66,65 +68,16 @@ function fetchTtsBuffer(textChunk, targetLocale) {
   });
 }
 
-// ==========================================================================
-// 🔍 EXPERIMENT & DIAGNOSTIC ENDPOINT (EXACT ERROR PATTERN FINDER)
-// ==========================================================================
-app.get('/test-gemini', async (req, res) => {
-  const activeKey = getActiveGeminiKey();
-  if (!activeKey) {
-    return res.status(500).json({ success: false, error: "API Key environment variable missing on Render." });
-  }
-
-  console.log("🧪 Running Live Diagnostics on Google API Gateway...");
-  const report = {};
-
-  try {
-    // Experiment 1: Try to hit the raw list models endpoint via v1beta to see what you own
-    const listOptions = {
-      hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/models?key=${activeKey}`,
-      method: 'GET'
-    };
-    const listResult = await makeHttpsRequest(listOptions, null);
-    report.v1beta_model_list_status = listResult.statusCode;
-    report.v1beta_allowed_models = listResult.data?.models ? listResult.data.models.map(m => m.name) : listResult.data;
-  } catch (err) {
-    report.v1beta_experiment_error = err.message;
-  }
-
-  try {
-    // Experiment 2: Try a direct custom raw fetch to bypass SDK auto-routing to see if it responds to 1.5-flash
-    const testPrompt = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
-    const directOptions = {
-      hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(testPrompt) }
-    };
-    const directResult = await makeHttpsRequest(directOptions, testPrompt);
-    report.direct_v1beta_flash_status = directResult.statusCode;
-    report.direct_v1beta_flash_response = directResult.data;
-  } catch (err) {
-    report.direct_experiment_error = err.message;
-  }
-
-  res.status(200).json({
-    message: "Diagnostic complete. Analyze the map below to find the core issue.",
-    report: report
-  });
-});
-
-// ==========================================================================
-// ⚡ LIFE CYCLE & INSTAMOJO ROUTES
-// ==========================================================================
+// 6. ROUTES: SYSTEM LIFE CYCLE
 app.get('/ping', (req, res) => res.status(200).send("WOKE_UP"));
 
+// 7. ROUTES: INSTAMOJO PAYMENT INTEGRATION
 app.post('/create-order', async (req, res) => {
   try {
     const { amount, purpose, buyer_name, email, bookId } = req.body;
     const tokenPayload = new URLSearchParams({ grant_type: 'client_credentials', client_id: CLIENT_ID, client_secret: CLIENT_SECRET }).toString();
     const tokenOptions = { hostname: 'api.instamojo.com', path: '/oauth2/token/', method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(tokenPayload) } };
-    
+
     const tokenResult = await makeHttpsRequest(tokenOptions, tokenPayload);
     if (tokenResult.statusCode !== 200 || !tokenResult.data.access_token) {
       return res.status(401).json({ success: false, message: "Auth failed", details: tokenResult.data });
@@ -153,9 +106,7 @@ app.post('/create-order', async (req, res) => {
 
 app.post('/instamojo-webhook', (req, res) => res.status(200).send("OK"));
 
-// ==========================================================================
-// 🔊 DEFAULT TEXT CHUNKING SPEECH GATEWAY
-// ==========================================================================
+// 8. ROUTES: TTS STREAMING GATEWAY
 app.post('/tts-stream', async (req, res) => {
   try {
     const { text, lang } = req.body;
@@ -191,24 +142,18 @@ app.post('/tts-stream', async (req, res) => {
   } catch (err) { res.status(500).end(); }
 });
 
-// ==========================================================================
-// ✨ PRODUCTION CORE RUNTIME ROUTE (USES ACTIVE SDK MODEL)
-// ==========================================================================
+// 9. ROUTES: PRODUCTION AI EXPLAINER
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
-  const activeKey = getActiveGeminiKey();
-  if (!activeKey) return res.status(500).json({ success: false, error: "Key missing" });
-
   try {
-    const genAI = new GoogleGenerativeAI(activeKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const completion = await client.chat.completions.create({
+      messages: [{ role: "user", content: `Read this and explain it simply like a close mentor in a friendly voice: "${text}"` }],
+      model: "deepseek-chat",
+    });
 
-    const prompt = `Read this and explain it simply like a close mentor in a friendly voice: "${text}"`;
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const processedStoryText = response.text().trim();
-
+    const processedStoryText = completion.choices[0].message.content.trim();
     const chunkBuffer = await fetchTtsBuffer(processedStoryText.substring(0, 150), lang === 'hi' ? 'hi' : 'en');
+    
     return res.status(200).json({
       success: true,
       explanationText: processedStoryText,
@@ -223,5 +168,6 @@ app.post('/smart-psychology-search', async (req, res) => {
    return res.status(200).json({ success: true, suggestions: ["Neuroplasticity", "Growth Mindset"] });
 });
 
+// 10. SERVER START
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Diagnostic active on ${PORT}`));
+app.listen(PORT, () => console.log(`Production engine running on ${PORT}`));
