@@ -1,7 +1,7 @@
 {
   "name": "talkink-backend",
   "version": "1.0.0",
-  "description": "Premium TTS backend for TalkInk",
+  "description": "Premium TTS backend for TalkInk via Groq Engine",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,7 +9,6 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "razorpay": "^2.9.2",
-    "openai": "^4.0.0"
+    "openai": "^4.28.0"
   }
 }
