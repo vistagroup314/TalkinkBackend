@@ -258,7 +258,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (VERIFIED REST PATH)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (STABLE FIXED PRODUCTION)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -274,7 +274,7 @@ app.post('/tts-ai-explain', async (req, res) => {
   }
 
   try {
-    console.log(`🤖 [AI Genuine Router] Connecting directly via stable production gateway...`);
+    console.log(`🤖 [AI Genuine Router] Connecting via official /v1/ pipeline...`);
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
@@ -291,8 +291,8 @@ app.post('/tts-ai-explain', async (req, res) => {
       "${text}"`;
     }
 
-    // 🚀 FIXED: Switched back to v1beta with the strictly explicit gemini-1.5-flash-8b structural routing name
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${activeKey}`;
+    // 🚀 FIXED: Switched to verified stable /v1/ endpoint with standard 'gemini-1.5-flash' name
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
     const promptPayload = {
       contents: [{
@@ -363,7 +363,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (VERIFIED REST PATH)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (STABLE PRODUCTION)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -380,8 +380,8 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology...`);
         
-        // 🚀 FIXED: Switched back to v1beta with the strictly explicit gemini-1.5-flash-8b structural routing name here too
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${activeKey}`;
+        // 🚀 FIXED: Switched to verified stable /v1/ endpoint with standard 'gemini-1.5-flash' name here too
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
         const promptPayload = {
             contents: [{
