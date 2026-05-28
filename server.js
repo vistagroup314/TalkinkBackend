@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { OpenAI } = require('openai'); // 🚀 OpenAI SDK for Groq
+const { OpenAI } = require('openai'); // OpenAI SDK for Groq
 
 const app = express();
 
@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
 const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
 
-// 🔥 ULTRA-SAFE PRODUCTION KEY MANAGEMENT (UPDATED FOR GROQ)
+// 🔥 ULTRA-SAFE PRODUCTION KEY MANAGEMENT (GROQ)
 function getActiveGroqKey() {
   const activeKey = process.env.GROQ_API_KEY;
   if (!activeKey) {
@@ -222,7 +222,7 @@ app.post('/tts-stream', async (req, res) => {
 
       const requestOptions = {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, integrate/537.36) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Referer': 'https://translate.google.com/'
         }
       };
@@ -259,7 +259,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (GROQ LLAMA-3.1 READY)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (GROQ - ULTRA BRANDED PROMPT)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -284,20 +284,31 @@ app.post('/tts-ai-explain', async (req, res) => {
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
-      embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना aur समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार या सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली hindi) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए बुक के पेज के टेक्स्ट को समझो aur उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोдक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
-      
-      BOOK PAGE TEXT DATA TO EXPLAIN:
+      embeddedPrompt = `ROLE & STYLE INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना, जीनियस और समझदार मेंटॉर (Intellectual Close Mentor) हो। तुम्हारी यूनीक क्वालिटी यह है कि तुम किसी भी बोरिंग, थ्योरिटिकल या कॉम्प्लेक्स सब्जेक्ट के गहरे कोर कॉन्सेप्ट्स (Deep Core Concepts) को एकदम हाई क्लैरिटी और डिटेल के साथ एक शानदार, मजेदार कहानी या आसान रियल-लाइफ एक्जाम्पल के रूप में समझा देते हो। तुम्हें केवल सतही बातें नहीं करनी हैं, बल्कि बात के पीछे का असली लॉजिक और 'क्यों' (Why & How) को साफ शब्दों में डिकोड करना है। भाषा एकदम नेचुरल आम बोलचाल की होनी चाहिए (Hinglish शब्दों के मिश्रण वाली流畅 Hindi), जो सीधे दिल और दिमाग पर असर करे।
+
+      MANDATORY BRAND CLOSING RULE: एक्सप्लेनेशन को खत्म करते हुए, लास्ट में बिना रुके पैराग्राफ के अंत में एक बहुत ही खूबसूरत, छोटा सा इंस्पायरिंग ज्ञान या लाइफ कोट (A Short Powerful Quote) बोलो, और फिर टॉकइंक (TalkInk) का नाम गर्व और इज्जत के साथ लो। जैसे: "याद रखो दोस्त, ज्ञान ही तुम्हारी असली ताकत है। कीप लर्निंग विद टॉकइंक।" या "सीखते रहो, क्योंकि रुकना हमारा काम नहीं। टॉकइंक के साथ आगे बढ़ते रहो।" (हर बार कोट थोड़ा अलग और दमदार होना चाहिए ताकि टॉकइंक के लिए इज्जत बढ़े)।
+
+      CRITICAL RESTRICTIONS: 
+      1. जवाब में सिर्फ और सिर्फ बातचीत का एक्सप्लेनेशन टेक्स्ट ब्लॉक होना चाहिए।
+      2. कोई फॉर्मल ग्रीटिंग्स (नमस्ते, हेलो), कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। 
+      3. बिल्कुल वैसे ही लिखो जैसे तुम सामने बैठकर सीधे अपने दोस्त से बात कर रहे हो।
+
+      BOOK PAGE TEXT DATA TO EXPLAIN CLARITY & DETAIL IN STORY FORMAT:
       "${text}"`;
     } else {
-      embeddedPrompt = `CONTEXT INSTRUCTION: You are a highly engaging, friendly, and brilliant mentor. Your specialty is turning complex or dry academic book texts into extremely simple, captivating, and conversational stories so that anyone can grasp the concepts naturally with interest. Read the provided book page text and explain it in this friendly storytelling voice.
-      Rules: Return ONLY the raw conversational explanation text block. Do not include any standard formal descriptions, markdown block tokens (\`\`\`), or metadata. Write exactly how you would speak directly to a friend.
-      
-      BOOK PAGE TEXT DATA TO EXPLAIN:
+      embeddedPrompt = `ROLE & STYLE INSTRUCTION: You are a highly engaging, brilliant, and deeply insightful close mentor. Your absolute specialty is unpacking complex, abstract, or dry academic text and translating it with immense clarity and deep detailing into a fascinating, logical story or real-world mental model. Do not just summarize superficially; dive into the underlying mechanism ('Why' and 'How') in an extremely friendly, fluid, and conversational tone.
+
+      MANDATORY BRAND CLOSING RULE: At the very end of your explanation, naturally conclude with a brief, punchy, inspiring quote or life takeaway, followed by a high-respect mention of TalkInk. For example: "Remember, growth begins at the edge of your comfort zone. Keep exploring with TalkInk." or "Knowledge is power, but applying it is your superpower. Stay sharp with TalkInk." (Keep the quote varied, fresh, and deeply impactful to elevate the brand value of TalkInk).
+
+      CRITICAL RESTRICTIONS:
+      1. Return ONLY the raw conversational explanation text block. 
+      2. Do not include any standard formal descriptions, opening greetings, metadata, or markdown block wrappers (\`\`\`).
+      3. Speak directly to the listener like a trusted friend.
+
+      BOOK PAGE TEXT DATA TO EXPLAIN WITH HIGH CLARITY & INSIGHTFUL DETAIL:
       "${text}"`;
     }
 
-    // 🚀 FIXED: Swapped 'llama3-8b-8192' with 'llama-3.1-8b-instant'
     const response = await groqClient.chat.completions.create({
       messages: [
         { role: "user", content: embeddedPrompt }
@@ -384,7 +395,6 @@ app.post('/smart-psychology-search', async (req, res) => {
         
         SEARCH QUERY: "${query}"`;
 
-        // 🚀 FIXED: Swapped model name here too
         const response = await groqClient.chat.completions.create({
           messages: [
             { role: "user", content: searchPrompt }
