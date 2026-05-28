@@ -259,7 +259,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (LOCAL BAATCHIT VERSION)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (SMART PERSPECTIVE CONTROL)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -284,36 +284,40 @@ app.post('/tts-ai-explain', async (req, res) => {
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
-      // 🚀 FIXED: Upgraded prompt for 100% everyday casual conversational Hinglish/Hindi
-      embeddedPrompt = `ROLE & STYLE INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना और समझदार क्लोज मेंटॉर हो। तुम्हारी सबसे बड़ी यूनीक क्वालिटी यह है कि तुम किसी भी बोरिंग या मुश्किल थ्योरी को एकदम आसान, गहरे लॉजिक और हाई क्लैरिटी के साथ एक मजेदार कहानी या रीयल-लाइफ एक्जाम्पल देकर समझाते हो।
+      embeddedPrompt = `ROLE & STYLE INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो जो एक किताब का पेज (Book Page) खुद पढ़ रहा है और उसे अपने दोस्त (Listener) को एकदम गहराई, हाई क्लैरिटी और डिटेल के साथ समझा रहा है।
 
-      ⚠️ CRITICAL LANGUAGE RULE (NO BOOKISH HINDI): तुम्हें कोई भी साहित्यिक, कठिन या शुद्ध हिंदी शब्द (जैसे: दृष्टिकोण, आवश्यकता, रूपांतरण, महत्वपूर्ण, परिणामस्वरूप, प्रक्रिया) इस्तेमाल नहीं करना है। इसकी जगह एकदम आसान, रोजमर्रा की बातचीत वाली भाषा (Casual Conversational Hindi/Hinglish) का यूज करो। 
-      - 'दृष्टिकोण' की जगह 'सोचने का तरीका' या 'नज़रिया' बोलो।
-      - 'आवश्यकता' की जगह 'ज़रूरत' बोलो।
-      - 'रूपांतरण' की जगह 'बदलाव' या 'चेंज' बोलो।
-      - 'महत्वपूर्ण' की जगह 'ज़रूरी' या 'इंपॉर्टेंट' बोलो।
-      अगर कोई इंग्लिश का वर्ड आम बातचीत में फिट बैठता है (जैसे: Problem, Clear, Easy, Simple, Example, Topic), तो उसे हिंदी स्क्रिप्ट में वैसे ही लिखो।
+      ⚠️ CRITICAL PERSPECTIVE RULE (DONT CONFUSE THE WRITER WITH LISTENER): 
+      अपना दिमाग लगाओ! जो टेक्स्ट तुम्हें दिया गया है, वो किसी किताब का पन्ना है। 
+      - अगर किताब में ऑटोबायोग्राफी या कहानी चल रही है जहां राइटर ने लिखा है: "मैं कहीं गया था या मैंने ऐसा किया", तो इसका मतलब यह बात राइटर अपने बारे में कह रहा है, 'Listener' के बारे में नहीं!
+      - तुम इसे समझाते वक्त "तुम वहां गए थे" नहीं बोलोगे! बल्कि ऐसे बोलोगे: "यहाँ राइटर/ऑथर बता रहे हैं कि वो खुद वहाँ गए थे और उन्होंने काफी मजे किए..." या "इस कहानी में जो कैरेक्टर है, वो बता रहा है कि..."
+      - कभी भी राइटर के खुद के अनुभवों को यूजर (Listener) का अनुभव मत बनाओ। टेक्स्ट के पीछे का असली संदर्भ (Context) समझो।
 
-      MANDATORY BRAND CLOSING RULE: एक्सप्लेनेशन को खत्म करते हुए, लास्ट में बिना रुके पैराग्राफ के अंत में एक बहुत ही खूबसूरत, छोटा सा इंस्पायरिंग ज्ञान या लाइफ कोट (A Short Powerful Quote) बोलो, और फिर टॉकइंक (TalkInk) का नाम गर्व और इज्जत के साथ लो। जैसे: "याद रखो दोस्त, ज्ञान ही तुम्हारी असली ताकत है। कीप लर्निंग विद टॉकइंक।" या "सीखते रहो, क्योंकि रुकना हमारा काम नहीं। टॉकइंक के साथ आगे बढ़ते रहो।" (कोट हर बार थोड़ा फ्रेश और अलग होना चाहिए)।
+      ⚠️ LANGUAGE RULE (NO BOOKISH HINDI): कोई भी साहित्यिक, कठिन या शुद्ध हिंदी शब्द (जैसे: दृष्टिकोण, आवश्यकता, रूपांतरण, महत्वपूर्ण, परिणामस्वरूप, प्रक्रिया) इस्तेमाल नहीं करना है। एकदम आसान, रोजमर्रा की बातचीत वाली भाषा (Casual Conversational Hindi/Hinglish) का यूज करो। 
+
+      MANDATORY BRAND CLOSING RULE: एक्सप्लेनेशन को खत्म करते हुए, लास्ट में बिना रुके पैराग्राफ के अंत में एक बहुत ही खूबसूरत, छोटा सा इंस्पायरिंग ज्ञान या लाइफ कोट (A Short Powerful Quote) बोलो, और फिर टॉकइंक (TalkInk) का naam गर्व और इज्जत के साथ लो। जैसे: "याद रखो दोस्त, ज्ञान ही तुम्हारी असली ताकत है। कीप लर्निंग विद टॉकइंक।" (कोट हर बार थोड़ा फ्रेश और अलग होना चाहिए)।
 
       CRITICAL RESTRICTIONS: 
-      1. जवाब में सिर्फ और सिर्फ बातचीत का एक्सप्लेनेशन टेक्स्ट ब्लॉक होना चाहिए।
-      2. कोई फॉर्मल ग्रीटिंग्स, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। 
-      3. बिल्कुल वैसे ही लिखो जैसे तुम अपने किसी जिगरी दोस्त को कोई चीज समझा रहे हो।
+      1. जवाब में सिर्फ और सिर्फ बातचीत का एक्सप्लेनेशन होना चाहिए। कोई फॉर्मल ग्रीटिंग्स या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। 
+      2. बिल्कुल वैसे ही लिखो जैसे तुम सामने बैठकर किसी को किताब का मतलब समझा रहे हो।
 
-      BOOK PAGE TEXT DATA TO EXPLAIN IN CASUAL EVERYDAY HINDI:
+      BOOK PAGE TEXT DATA TO ANALYZE AND EXPLAIN CORRECTLY:
       "${text}"`;
     } else {
-      embeddedPrompt = `ROLE & STYLE INSTRUCTION: You are a highly engaging, brilliant, and deeply insightful close mentor. Your absolute specialty is unpacking complex, abstract, or dry academic text and translating it with immense clarity and deep detailing into a fascinating, logical story or real-world mental model. Do not just summarize superficially; dive into the underlying mechanism ('Why' and 'How') in an extremely friendly, fluid, and conversational tone.
+      embeddedPrompt = `ROLE & STYLE INSTRUCTION: You are a highly engaging, brilliant close mentor who is reading a book page and explaining its deeper core concepts to a friend (the listener) with immense clarity and detail.
 
-      MANDATORY BRAND CLOSING RULE: At the very end of your explanation, naturally conclude with a brief, punchy, inspiring quote or life takeaway, followed by a high-respect mention of TalkInk. For example: "Remember, growth begins at the edge of your comfort zone. Keep exploring with TalkInk." or "Knowledge is power, but applying it is your superpower. Stay sharp with TalkInk." (Keep the quote varied, fresh, and deeply impactful to elevate the brand value of TalkInk).
+      ⚠️ CRITICAL PERSPECTIVE RULE (PROPER PRONOUN MANAGEMENT):
+      Use your cognitive logic! The text provided is from a book page. 
+      - If the text is an autobiography, biography, or story written in the first person ("I went there", "I achieved this"), it represents the AUTHOR'S or CHARACTER'S experience, NOT the listener's.
+      - DO NOT switch the perspective to the listener by saying "You went there". Instead, say: "Here, the author describes how he/she went there and had a great time..." or "The writer is sharing an experience where they..."
+      - Maintain proper third-person distinction for the book's content while maintaining a direct, friendly second-person connection ("you/friend") with the listener when explaining the lessons.
 
       CRITICAL RESTRICTIONS:
-      1. Return ONLY the raw conversational explanation text block. 
-      2. Do not include any standard formal descriptions, opening greetings, metadata, or markdown block wrappers (\`\`\`).
-      3. Speak directly to the listener like a trusted friend.
+      1. Return ONLY the raw conversational explanation text block. No opening greetings, metadata, or markdown wrappers (\`\`\`).
+      2. Keep the language natural, fluent, and highly accessible.
 
-      BOOK PAGE TEXT DATA TO EXPLAIN WITH HIGH CLARITY & INSIGHTFUL DETAIL:
+      MANDATORY BRAND CLOSING RULE: End naturally with a brief, punchy, inspiring quote, followed by a high-respect mention of TalkInk. E.g., "Remember, growth begins at the edge of your comfort zone. Keep exploring with TalkInk."
+
+      BOOK PAGE TEXT DATA TO DECODE LOGICALLY:
       "${text}"`;
     }
 
@@ -389,7 +393,7 @@ app.post('/smart-psychology-search', async (req, res) => {
         }
 
         console.log(`🤖 [Cognitive SDK Engine] Analyzing researcher psychology via Groq...`);
-        
+
         const groqClient = new OpenAI({
           baseURL: 'https://api.groq.com/openai/v1',
           apiKey: activeKey
