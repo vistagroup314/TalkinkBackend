@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { GoogleGenerativeAI } = require('@google/generative-ai'); // 🚀 FIXED: Standard Correct Constructor Name
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 
@@ -259,7 +259,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (SDK CONSTRUCTOR FIXED)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (FIXED PRODUCTION MODEL)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -277,9 +277,10 @@ app.post('/tts-ai-explain', async (req, res) => {
   try {
     console.log(`🤖 [AI SDK Router] Connecting via stable SDK channel...`);
 
-    // 🚀 FIXED: Initializing with the exact correct SDK constructor name
     const genAI = new GoogleGenerativeAI(activeKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // 🚀 CRITICAL FIXED: Switched alias to standard production 'gemini-1.5-flash-latest'
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
@@ -296,7 +297,6 @@ app.post('/tts-ai-explain', async (req, res) => {
       "${text}"`;
     }
 
-    // 🚀 FIXED: Correct standard SDK runtime execution syntax
     const result = await model.generateContent(embeddedPrompt);
     const response = await result.response;
     const processedStoryText = response.text().trim();
@@ -348,7 +348,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (SDK FIXED)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (FIXED PRODUCTION MODEL)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -365,9 +365,10 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         console.log(`🤖 [Cognitive SDK Engine] Analyzing researcher psychology...`);
         
-        // 🚀 FIXED: Correct standard SDK setup here as well
         const genAI = new GoogleGenerativeAI(activeKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // 🚀 CRITICAL FIXED: Switched here as well to production 'gemini-1.5-flash-latest'
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
         const searchPrompt = `INSTRUCTION: You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind the search query provided below. Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
         
