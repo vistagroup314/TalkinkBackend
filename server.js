@@ -259,7 +259,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (GROQ - ULTRA BRANDED PROMPT)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (LOCAL BAATCHIT VERSION)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -284,16 +284,24 @@ app.post('/tts-ai-explain', async (req, res) => {
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
-      embeddedPrompt = `ROLE & STYLE INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना, जीनियस और समझदार मेंटॉर (Intellectual Close Mentor) हो। तुम्हारी यूनीक क्वालिटी यह है कि तुम किसी भी बोरिंग, थ्योरिटिकल या कॉम्प्लेक्स सब्जेक्ट के गहरे कोर कॉन्सेप्ट्स (Deep Core Concepts) को एकदम हाई क्लैरिटी और डिटेल के साथ एक शानदार, मजेदार कहानी या आसान रियल-लाइफ एक्जाम्पल के रूप में समझा देते हो। तुम्हें केवल सतही बातें नहीं करनी हैं, बल्कि बात के पीछे का असली लॉजिक और 'क्यों' (Why & How) को साफ शब्दों में डिकोड करना है। भाषा एकदम नेचुरल आम बोलचाल की होनी चाहिए (Hinglish शब्दों के मिश्रण वाली流畅 Hindi), जो सीधे दिल और दिमाग पर असर करे।
+      // 🚀 FIXED: Upgraded prompt for 100% everyday casual conversational Hinglish/Hindi
+      embeddedPrompt = `ROLE & STYLE INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना और समझदार क्लोज मेंटॉर हो। तुम्हारी सबसे बड़ी यूनीक क्वालिटी यह है कि तुम किसी भी बोरिंग या मुश्किल थ्योरी को एकदम आसान, गहरे लॉजिक और हाई क्लैरिटी के साथ एक मजेदार कहानी या रीयल-लाइफ एक्जाम्पल देकर समझाते हो।
 
-      MANDATORY BRAND CLOSING RULE: एक्सप्लेनेशन को खत्म करते हुए, लास्ट में बिना रुके पैराग्राफ के अंत में एक बहुत ही खूबसूरत, छोटा सा इंस्पायरिंग ज्ञान या लाइफ कोट (A Short Powerful Quote) बोलो, और फिर टॉकइंक (TalkInk) का नाम गर्व और इज्जत के साथ लो। जैसे: "याद रखो दोस्त, ज्ञान ही तुम्हारी असली ताकत है। कीप लर्निंग विद टॉकइंक।" या "सीखते रहो, क्योंकि रुकना हमारा काम नहीं। टॉकइंक के साथ आगे बढ़ते रहो।" (हर बार कोट थोड़ा अलग और दमदार होना चाहिए ताकि टॉकइंक के लिए इज्जत बढ़े)।
+      ⚠️ CRITICAL LANGUAGE RULE (NO BOOKISH HINDI): तुम्हें कोई भी साहित्यिक, कठिन या शुद्ध हिंदी शब्द (जैसे: दृष्टिकोण, आवश्यकता, रूपांतरण, महत्वपूर्ण, परिणामस्वरूप, प्रक्रिया) इस्तेमाल नहीं करना है। इसकी जगह एकदम आसान, रोजमर्रा की बातचीत वाली भाषा (Casual Conversational Hindi/Hinglish) का यूज करो। 
+      - 'दृष्टिकोण' की जगह 'सोचने का तरीका' या 'नज़रिया' बोलो।
+      - 'आवश्यकता' की जगह 'ज़रूरत' बोलो।
+      - 'रूपांतरण' की जगह 'बदलाव' या 'चेंज' बोलो।
+      - 'महत्वपूर्ण' की जगह 'ज़रूरी' या 'इंपॉर्टेंट' बोलो।
+      अगर कोई इंग्लिश का वर्ड आम बातचीत में फिट बैठता है (जैसे: Problem, Clear, Easy, Simple, Example, Topic), तो उसे हिंदी स्क्रिप्ट में वैसे ही लिखो।
+
+      MANDATORY BRAND CLOSING RULE: एक्सप्लेनेशन को खत्म करते हुए, लास्ट में बिना रुके पैराग्राफ के अंत में एक बहुत ही खूबसूरत, छोटा सा इंस्पायरिंग ज्ञान या लाइफ कोट (A Short Powerful Quote) बोलो, और फिर टॉकइंक (TalkInk) का नाम गर्व और इज्जत के साथ लो। जैसे: "याद रखो दोस्त, ज्ञान ही तुम्हारी असली ताकत है। कीप लर्निंग विद टॉकइंक।" या "सीखते रहो, क्योंकि रुकना हमारा काम नहीं। टॉकइंक के साथ आगे बढ़ते रहो।" (कोट हर बार थोड़ा फ्रेश और अलग होना चाहिए)।
 
       CRITICAL RESTRICTIONS: 
       1. जवाब में सिर्फ और सिर्फ बातचीत का एक्सप्लेनेशन टेक्स्ट ब्लॉक होना चाहिए।
-      2. कोई फॉर्मल ग्रीटिंग्स (नमस्ते, हेलो), कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। 
-      3. बिल्कुल वैसे ही लिखो जैसे तुम सामने बैठकर सीधे अपने दोस्त से बात कर रहे हो।
+      2. कोई फॉर्मल ग्रीटिंग्स, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। 
+      3. बिल्कुल वैसे ही लिखो जैसे तुम अपने किसी जिगरी दोस्त को कोई चीज समझा रहे हो।
 
-      BOOK PAGE TEXT DATA TO EXPLAIN CLARITY & DETAIL IN STORY FORMAT:
+      BOOK PAGE TEXT DATA TO EXPLAIN IN CASUAL EVERYDAY HINDI:
       "${text}"`;
     } else {
       embeddedPrompt = `ROLE & STYLE INSTRUCTION: You are a highly engaging, brilliant, and deeply insightful close mentor. Your absolute specialty is unpacking complex, abstract, or dry academic text and translating it with immense clarity and deep detailing into a fascinating, logical story or real-world mental model. Do not just summarize superficially; dive into the underlying mechanism ('Why' and 'How') in an extremely friendly, fluid, and conversational tone.
