@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
+// 🚀 NEW: Official Google AI SDK import kiya
+const { GoogleGenAI } = require('@google/generative-ai');
 
 const app = express();
 
@@ -20,9 +22,7 @@ const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6
 
 // 🔥 ULTRA-SAFE PRODUCTION KEY MANAGEMENT
 function getActiveGeminiKey() {
-  // Yeh Render ke Environment settings se live secure key uthayega
   const activeKey = process.env.GEMINI_API_KEY;
-
   if (!activeKey) {
     console.error("❌ Critical: GEMINI_API_KEY is missing in Render Environment settings!");
   }
@@ -260,7 +260,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (SECURE ENVIRONMENT PATH)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (SECURE OFFICIAL SDK PATH)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -276,12 +276,12 @@ app.post('/tts-ai-explain', async (req, res) => {
   }
 
   try {
-    console.log(`🤖 [AI Genuine Deck] Connecting via Secure Environment Key mapping...`);
+    console.log(`🤖 [AI Genuine SDK Deck] Initializing official secure instance...`);
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
-      embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना और समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार Cigar या सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और sensory एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
+      embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना aur समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार या सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली हिंदी) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए बुक के पेज के टेक्स्ट को समझो और उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
+      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोдक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
       
       BOOK PAGE TEXT DATA TO EXPLAIN:
       "${text}"`;
@@ -293,33 +293,14 @@ app.post('/tts-ai-explain', async (req, res) => {
       "${text}"`;
     }
 
-    // 🚀 FIXED: Changed /v1/ to /v1beta/ for model route compatibility
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(activeKey)}`;
-
-    const promptPayload = {
-      contents: [{
-        parts: [{
-          text: embeddedPrompt
-        }]
-      }]
-    };
-
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'x-goog-api-key': activeKey 
-      },
-      body: JSON.stringify(promptPayload)
+    // 🚀 FIXED: Using Official SDK wrapper now to prevent 404 router mismatch
+    const ai = new GoogleGenAI({ apiKey: activeKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: embeddedPrompt,
     });
 
-    if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.text();
-      throw new Error(`Gemini core pipeline rejected with status: ${geminiResponse.status}. Details: ${errorData}`);
-    }
-
-    const geminiData = await geminiResponse.json();
-    const processedStoryText = geminiData.candidates[0].content.parts[0].text.trim();
+    const processedStoryText = response.text.trim();
 
     console.log(`🔊 [AI Voice Compilation] Converting dynamic story transcript into binary blocks.`);
     const sentences = processedStoryText.match(/[^.!?।]+[.!?门]?/g) || [processedStoryText];
@@ -368,7 +349,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (SDK COMPATIBLE)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -385,38 +366,20 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology...`);
         
-        // 🚀 FIXED: Changed /v1/ to /v1beta/ for model route compatibility
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(activeKey)}`;
-
-        const promptPayload = {
-            contents: [{
-                parts: [{
-                    text: `INSTRUCTION: You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind the search query provided below. Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
-                    
-                    Strict Rules:
-                    1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json).
-                    2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]
-                    
-                    SEARCH QUERY: "${query}"`
-                }]
-            }]
-        };
-
-        const response = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-goog-api-key': activeKey 
-          },
-          body: JSON.stringify(promptPayload)
+        // 🚀 FIXED: Using Official SDK wrapper here as well
+        const ai = new GoogleGenAI({ apiKey: activeKey });
+        const response = await ai.models.generateContent({
+          model: 'gemini-1.5-flash',
+          contents: `INSTRUCTION: You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind the search query provided below. Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
+          
+          Strict Rules:
+          1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json).
+          2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]
+          
+          SEARCH QUERY: "${query}"`,
         });
 
-        if (!response.ok) {
-            throw new Error(`API_FAULT_STATUS_${response.status}`);
-        }
-
-        const data = await response.json();
-        let rawJsonText = data.candidates[0].content.parts[0].text.trim();
+        let rawJsonText = response.text.trim();
 
         if (rawJsonText.startsWith("```")) {
             rawJsonText = rawJsonText.replace(/```json|```/g, "").trim();
