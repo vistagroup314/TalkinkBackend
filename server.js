@@ -221,7 +221,7 @@ app.post('/tts-stream', async (req, res) => {
 
       const requestOptions = {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Referer': 'https://translate.google.com/'
         }
       };
@@ -258,7 +258,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (RAW FETCH DIRECT API)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (STABLE API ROUTE)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -274,7 +274,7 @@ app.post('/tts-ai-explain', async (req, res) => {
   }
 
   try {
-    console.log(`🤖 [AI Genuine Raw Fetch] Connecting directly via HTTP stream...`);
+    console.log(`🤖 [AI Genuine Router] Connecting directly via stable production gateway...`);
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
@@ -291,8 +291,8 @@ app.post('/tts-ai-explain', async (req, res) => {
       "${text}"`;
     }
 
-    // 🚀 FIXED: Native Endpoint URL mapping pattern without constructor dependency
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+    // 🚀 FIXED: Switched route to stable /v1/ pipeline with the verified -latest model reference string
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${activeKey}`;
 
     const promptPayload = {
       contents: [{
@@ -363,7 +363,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (RAW FETCH)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (STABLE ROUTE)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -380,8 +380,8 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology...`);
         
-        // 🚀 FIXED: Native Endpoint URL mapping pattern here as well
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+        // 🚀 FIXED: Switched route to stable /v1/ pipeline with verified model routing string here as well
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${activeKey}`;
 
         const promptPayload = {
             contents: [{
