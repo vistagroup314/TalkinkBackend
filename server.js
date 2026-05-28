@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { OpenAI } = require('openai'); // 🚀 SWAPPED: Google SDK replaced with OpenAI SDK for Groq
+const { OpenAI } = require('openai'); // 🚀 OpenAI SDK for Groq
 
 const app = express();
 
@@ -222,7 +222,7 @@ app.post('/tts-stream', async (req, res) => {
 
       const requestOptions = {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, integrate/537.36) Chrome/120.0.0.0 Safari/537.36',
           'Referer': 'https://translate.google.com/'
         }
       };
@@ -259,7 +259,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (GROQ LLAMA-3 INTEGRATION)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (GROQ LLAMA-3.1 READY)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -277,7 +277,6 @@ app.post('/tts-ai-explain', async (req, res) => {
   try {
     console.log(`🤖 [AI SDK Router] Connecting via stable Groq OpenAI channel...`);
 
-    // 🚀 FIXED: Initializing OpenAI SDK pointing to Groq's Core Infrastructure
     const groqClient = new OpenAI({
       baseURL: 'https://api.groq.com/openai/v1',
       apiKey: activeKey
@@ -286,7 +285,7 @@ app.post('/tts-ai-explain', async (req, res) => {
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
       embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना aur समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार या सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली hindi) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए बुक के पेज के टेक्स्ट को समझो aur उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
+      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोдक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
       
       BOOK PAGE TEXT DATA TO EXPLAIN:
       "${text}"`;
@@ -298,12 +297,12 @@ app.post('/tts-ai-explain', async (req, res) => {
       "${text}"`;
     }
 
-    // 🚀 FIXED: Using Llama-3-8b-8192 on Groq architecture with exact standard Chat Completion format
+    // 🚀 FIXED: Swapped 'llama3-8b-8192' with 'llama-3.1-8b-instant'
     const response = await groqClient.chat.completions.create({
       messages: [
         { role: "user", content: embeddedPrompt }
       ],
-      model: "llama3-8b-8192"
+      model: "llama-3.1-8b-instant"
     });
 
     const processedStoryText = response.choices[0].message.content.trim();
@@ -372,7 +371,6 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         console.log(`🤖 [Cognitive SDK Engine] Analyzing researcher psychology via Groq...`);
         
-        // 🚀 FIXED: Reconfigured to call Groq Llama-3 system
         const groqClient = new OpenAI({
           baseURL: 'https://api.groq.com/openai/v1',
           apiKey: activeKey
@@ -386,11 +384,12 @@ app.post('/smart-psychology-search', async (req, res) => {
         
         SEARCH QUERY: "${query}"`;
 
+        // 🚀 FIXED: Swapped model name here too
         const response = await groqClient.chat.completions.create({
           messages: [
             { role: "user", content: searchPrompt }
           ],
-          model: "llama3-8b-8192"
+          model: "llama-3.1-8b-instant"
         });
 
         let rawJsonText = response.choices[0].message.content.trim();
