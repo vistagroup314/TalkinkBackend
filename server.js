@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { GoogleGenAI } = require('@google/generative-ai'); // 🚀 Standard Official SDK
+const { GoogleGenerativeAI } = require('@google/generative-ai'); // 🚀 FIXED: Standard Correct Constructor Name
 
 const app = express();
 
@@ -259,7 +259,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (OFFICIAL SDK SOLUTION)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (SDK CONSTRUCTOR FIXED)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -275,10 +275,11 @@ app.post('/tts-ai-explain', async (req, res) => {
   }
 
   try {
-    console.log(`🤖 [AI SDK Router] Connecting via official SDK channel...`);
+    console.log(`🤖 [AI SDK Router] Connecting via stable SDK channel...`);
 
-    // Initialize SDK natively
-    const ai = new GoogleGenAI({ apiKey: activeKey });
+    // 🚀 FIXED: Initializing with the exact correct SDK constructor name
+    const genAI = new GoogleGenerativeAI(activeKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
@@ -295,13 +296,10 @@ app.post('/tts-ai-explain', async (req, res) => {
       "${text}"`;
     }
 
-    // 🚀 CRASH-PROOF SDK CALL
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: embeddedPrompt,
-    });
-
-    const processedStoryText = response.text.trim();
+    // 🚀 FIXED: Correct standard SDK runtime execution syntax
+    const result = await model.generateContent(embeddedPrompt);
+    const response = await result.response;
+    const processedStoryText = response.text().trim();
 
     console.log(`🔊 [AI Voice Compilation] Converting dynamic story transcript into binary blocks.`);
     const sentences = processedStoryText.match(/[^.!?।]+[.!?门]?/g) || [processedStoryText];
@@ -350,7 +348,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (OFFICIAL SDK SOLUTION)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (SDK FIXED)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -367,7 +365,9 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         console.log(`🤖 [Cognitive SDK Engine] Analyzing researcher psychology...`);
         
-        const ai = new GoogleGenAI({ apiKey: activeKey });
+        // 🚀 FIXED: Correct standard SDK setup here as well
+        const genAI = new GoogleGenerativeAI(activeKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const searchPrompt = `INSTRUCTION: You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind the search query provided below. Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
         
@@ -377,13 +377,9 @@ app.post('/smart-psychology-search', async (req, res) => {
         
         SEARCH QUERY: "${query}"`;
 
-        // 🚀 CRASH-PROOF SDK CALL
-        const response = await ai.models.generateContent({
-          model: 'gemini-1.5-flash',
-          contents: searchPrompt,
-        });
-
-        let rawJsonText = response.text.trim();
+        const result = await model.generateContent(searchPrompt);
+        const response = await result.response;
+        let rawJsonText = response.text().trim();
 
         if (rawJsonText.startsWith("```")) {
             rawJsonText = rawJsonText.replace(/```json|```/g, "").trim();
