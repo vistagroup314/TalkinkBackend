@@ -258,7 +258,7 @@ app.post('/tts-stream', async (req, res) => {
 
 
 // ==========================================================================
-// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (100% VERIFIED ROUTE)
+// ✨ GENUINE DYNAMIC AI STORY EXPLANATION GATEWAY (NATIVE HTTPS FIXED)
 // ==========================================================================
 app.post('/tts-ai-explain', async (req, res) => {
   const { text, lang } = req.body;
@@ -274,12 +274,12 @@ app.post('/tts-ai-explain', async (req, res) => {
   }
 
   try {
-    console.log(`🤖 [AI Genuine Router] Connecting via direct structural fallback endpoint...`);
+    console.log(`🤖 [AI Genuine Router] Connecting via direct native HTTPS channel...`);
 
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
-      embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना aur समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार या सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली hindi) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए बुक के पेज के टेक्स्ट को समझो aur उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
-      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन 😊 टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोдक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
+      embeddedPrompt = `CONTEXT INSTRUCTION: तुम एक बेहद प्यारे, दोस्ताना aur समझदार मेंटॉर हो। तुम्हारी विशेषता यह है कि तुम किसी bhi boring या complex subject को एकदम मजेदार या सरल कहानी के रूप में आम बोलचाल की भाषा (Hinglish शब्दों के मिश्रण वाली hindi) में समझा देते हो, ताकि कोई भी उसे आसानी से समझ जाए। नीचे दिए गए boek के पेज के टेक्स्ट को समझो aur उसे इसी कहानी सुनाने वाले अंदाज़ में एक्सप्लेन करो। 
+      नियम: जवाब में सिर्फ और सिर्फ एक्सप्लेनेशन टेक्स्ट होना चाहिए। कोई फॉर्मल ग्रीटिंग, कोई इंट्रोडक्टरी लाइन या मार्कडाउन फ़ॉर्मेटिंग (\`\`\`) नहीं होनी चाहिए। बिल्कुल वैसे बोलो जैसे सीधे बातचीत कर रहे हो।
       
       BOOK PAGE TEXT DATA TO EXPLAIN:
       "${text}"`;
@@ -291,30 +291,32 @@ app.post('/tts-ai-explain', async (req, res) => {
       "${text}"`;
     }
 
-    // 🚀 FULLY CRASH-PROOF VERIFIED ROUTE: Switched endpoint layout to target v1beta with strict global fallback
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
-
-    const promptPayload = {
+    const promptPayload = JSON.stringify({
       contents: [{
         parts: [{
           text: embeddedPrompt
         }]
       }]
-    };
-
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(promptPayload)
     });
 
-    if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.text();
-      throw new Error(`Gemini core pipeline rejected with status: ${geminiResponse.status}. Details: ${errorData}`);
+    // 🚀 FIXED: Pure native HTTPS mapping to avoid Node fetch or router url mismatches
+    const aiOptions = {
+      hostname: 'generativelanguage.googleapis.com',
+      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(promptPayload)
+      }
+    };
+
+    const aiResult = await makeHttpsRequest(aiOptions, promptPayload);
+
+    if (aiResult.statusCode !== 200) {
+      throw new Error(`Gemini core pipeline rejected with status: ${aiResult.statusCode}. Details: ${JSON.stringify(aiResult.data)}`);
     }
 
-    const geminiData = await geminiResponse.json();
-    const processedStoryText = geminiData.candidates[0].content.parts[0].text.trim();
+    const processedStoryText = aiResult.data.candidates[0].content.parts[0].text.trim();
 
     console.log(`🔊 [AI Voice Compilation] Converting dynamic story transcript into binary blocks.`);
     const sentences = processedStoryText.match(/[^.!?।]+[.!?门]?/g) || [processedStoryText];
@@ -363,7 +365,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 
 // ==========================================================================
-// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (VERIFIED ROUTE)
+// 🧠 COGNITIVE INTENT & PSYCHOLOGY KEYWORD GENERATOR (NATIVE HTTPS FIXED)
 // ==========================================================================
 app.post('/smart-psychology-search', async (req, res) => {
     try {
@@ -380,10 +382,7 @@ app.post('/smart-psychology-search', async (req, res) => {
 
         console.log(`🤖 [Cognitive Engine] Analyzing researcher psychology...`);
         
-        // 🚀 FULLY CRASH-PROOF VERIFIED ROUTE: Switched here as well to v1beta with strict global fallback
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
-
-        const promptPayload = {
+        const promptPayload = JSON.stringify({
             contents: [{
                 parts: [{
                     text: `INSTRUCTION: You are an expert academic research psychologist and librarian. Analyze the core intellectual, psychological, and theoretical intent behind the search query provided below. Provide a clean JSON string array containing 5 lateral concepts, underlying psychological theories, mental models, or root-cause topics that a deep researcher is tracking, EVEN IF they don't use the exact words from the query.
@@ -397,18 +396,24 @@ app.post('/smart-psychology-search', async (req, res) => {
             }]
         };
 
-        const response = await fetch(geminiUrl, {
+        // 🚀 FIXED: Pure native HTTPS here as well
+        const searchOptions = {
+          hostname: 'generativelanguage.googleapis.com',
+          path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`,
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(promptPayload)
-        });
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(promptPayload)
+          }
+        };
 
-        if (!response.ok) {
-            throw new Error(`API_FAULT_STATUS_${response.status}`);
+        const searchResult = await makeHttpsRequest(searchOptions, promptPayload);
+
+        if (searchResult.statusCode !== 200) {
+            throw new Error(`API_FAULT_STATUS_${searchResult.statusCode}`);
         }
 
-        const data = await response.json();
-        let rawJsonText = data.candidates[0].content.parts[0].text.trim();
+        let rawJsonText = searchResult.data.candidates[0].content.parts[0].text.trim();
 
         if (rawJsonText.startsWith("```")) {
             rawJsonText = rawJsonText.replace(/```json|```/g, "").trim();
