@@ -289,8 +289,7 @@ app.post('/tts-ai-explain', async (req, res) => {
 
 इसे ऐसे समझाओ जैसे एक दोस्त दूसरे दोस्त को कोई मुश्किल टॉपिक एकदम कैजुअली और बिना किसी मेहनत के समझा देता है। ध्यान रखना कि यह सिर्फ एक बुक के पेज का टेक्स्ट है, न कि लिसनर का या तुम्हारा कोई पर्सनल थॉट।
 
-CURRENT TARGET LANGUAGE SYNTAX: Spoken Hinglish / Natural Devanagari Script 
-ye raha wo text bhai mujhe asan bhasa me samjhao 👇👇 
+CURRENT TARGET LANGUAGE SYNTAX: Spoken Hinglish / Natural Devanagari Script text ,bhai mujhe asan bhasa me samjhao dhyan rakhna ko ye meri li ki hui baat nehi he ye is book me esa likha he  ye raha wo text 👇👇
 "${text}"`;
     } else {
       embeddedPrompt = `ROLE & TONE INSTRUCTION:
