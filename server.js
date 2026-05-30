@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const https = require('https');
 const { OpenAI } = require('openai'); // OpenAI SDK for Groq
-const admin = require('firebase-admin'); // 🔥 Added for Server-Side Safe Firebase Operations
+const admin = require('firebase-admin'); // 🔥 Server-Side Safe Firebase Operations
 
 const app = express();
 
@@ -95,14 +95,14 @@ app.get('/ping', (req, res) => {
 });
 
 // ==========================================================================
-// 💳 DYNAMIC COSMFEED ORDER CREATION ROUTE (Saves you from making individual links)
+// 💳 DYNAMIC COSMFEED ORDER CREATION ROUTE (Tracking Exact User ID)
 // ==========================================================================
 app.post('/create-order', async (req, res) => {
   try {
-    const { amount, purpose, buyer_name, email, bookId } = req.body;
+    const { amount, purpose, buyer_name, email, bookId, userId } = req.body; // 🔥 Catching exact userId from frontend
     const requestOrigin = req.headers.origin || 'https://bhoiganesh218.github.io';
 
-    // Dynamic dynamic payload mapping for Cosmfeed Custom Integration
+    // Dynamic payload mapping for Cosmfeed Custom Integration with metadata tracing
     const paymentPayload = JSON.stringify({
       amount: Number(amount),
       title: purpose || `TalkInk Premium Book Access`,
@@ -115,7 +115,8 @@ app.post('/create-order', async (req, res) => {
       },
       metadata: {
         bookId: bookId,
-        buyerEmail: email
+        buyerEmail: email,
+        userId: userId // 🔥 Mapping exact UID inside safe vault storage
       }
     });
 
@@ -130,7 +131,7 @@ app.post('/create-order', async (req, res) => {
       }
     };
 
-    console.log(`🚀 [Cosmfeed Engine] Generating custom payload payment link for Book ID: ${bookId}`);
+    console.log(`🚀 [Cosmfeed Engine] Generating payment link for Book ID: ${bookId} | User ID: ${userId}`);
     const result = await makeHttpsRequest(options, paymentPayload);
 
     if (result.statusCode >= 200 && result.statusCode < 300 && result.data.url) {
@@ -154,7 +155,7 @@ app.post('/create-order', async (req, res) => {
 });
 
 // ==========================================================================
-// 🔔 AUTOMATED COSMFEED PAYMENT SUCCESS WEBHOOK HANDLER (BULLETPROOF SOLUTION)
+// 🔔 AUTOMATED COSMFEED PAYMENT SUCCESS WEBHOOK HANDLER (EXACT UID MATCH)
 // ==========================================================================
 app.post('/cosmfeed-webhook', async (req, res) => {
   try {
@@ -163,34 +164,26 @@ app.post('/cosmfeed-webhook', async (req, res) => {
 
     // Verifying event confirmation context matrices
     if (eventData.event === 'payment.success') {
-      const { bookId, buyerEmail } = eventData.metadata || {};
+      const { bookId, buyerEmail, userId } = eventData.metadata || {};
       const transactionId = eventData.paymentId;
 
-      console.log(`🔥 SUCCESS: Payment verified for ${buyerEmail}. Unlocking book: ${bookId} [Txn: ${transactionId}]`);
+      console.log(`🔥 SUCCESS: Payment verified for ${buyerEmail}. Unlocking book: ${bookId} for User ID: ${userId} [Txn: ${transactionId}]`);
 
-      // Server-to-Server FireStore Auto Injection Pipeline
-      if (admin.apps.length > 0 && bookId && buyerEmail) {
+      // Server-to-Server FireStore Auto Injection Pipeline via Exact UID Document Match
+      if (admin.apps.length > 0 && bookId && userId) {
         const db = admin.firestore();
-        const usersRef = db.collection("users");
         
-        // Match user by email address safely
-        const snapshot = await usersRef.where("email", "==", buyerEmail.trim()).get();
-        
-        if (!snapshot.empty) {
-          const userDoc = snapshot.docs[0];
-          const userRef = usersRef.doc(userDoc.id);
+        // Exact Document route match (No email dependent search engine loop)
+        const userRef = db.collection("users").doc(userId.trim());
 
-          // Atomic update operation to push bookId into purchasedBooks node array
-          await userRef.update({
-            purchasedBooks: admin.firestore.FieldValue.arrayUnion(bookId)
-          });
+        // Atomic update operation to push bookId into purchasedBooks node array
+        await userRef.update({
+          purchasedBooks: admin.firestore.FieldValue.arrayUnion(bookId)
+        });
 
-          console.log(`🎉 [Cloud Matrix Sync] Book ${bookId} automatically unlocked in DB for user account!`);
-        } else {
-          console.error(`❌ DB Sync Failed: User profile with email ${buyerEmail} not found.`);
-        }
+        console.log(`🎉 [Cloud Matrix Sync] Book ${bookId} automatically unlocked in DB for document id: ${userId}!`);
       } else {
-        console.error("❌ Firebase Admin SDK not active or metadata context incomplete.");
+        console.error("❌ Firebase Admin SDK not active or metadata context incomplete (userId/bookId missing).");
       }
     }
 
@@ -321,7 +314,7 @@ app.post('/tts-ai-explain', async (req, res) => {
     let embeddedPrompt = "";
     if (selectedLanguage === 'hi') {
       embeddedPrompt = `CONTEXT & OBJECTIVE:
-नीचे एक बुक के पेज का टेक्स्ट (raw text) दिया गया है। तुम्हारा काम सिर्फ और सिर्फ इस पेज में लिखी बातों को एकदम आसान, सिंपल और मजेदार तरीके से समझाना है। 
+नीचे एक book के पेज का टेक्स्ट (raw text) दिया गया है। तुम्हारा काम सिर्फ और सिर्फ इस पेज में लिखी बातों को एकदम आसान, सिंपल और मजेदार तरीके से समझाना है। 
 
 इसे ऐसे समझाओ जैसे एक दोस्त दूसरे दोस्त को कोई मुश्किल टॉपिक एकदम कैजुअली और बिना किसी मेहनत के समझा देता है। ध्यान रखना कि यह सिर्फ एक बुक के पेज का टेक्स्ट है, न कि लिसनर का या तुम्हारा कोई पर्सनल थॉट।
 
@@ -355,7 +348,7 @@ BOOK PAGE TEXT:
       messages: [
         { role: "user", content: embeddedPrompt }
       ],
-      move: "llama-3.1-8b-instant"
+      model: "llama-3.1-8b-instant" // 🔥 Fixed Typo from 'move' to 'model'
     });
 
     const processedStoryText = response.choices[0].message.content.trim();
@@ -462,4 +455,4 @@ app.post('/smart-psychology-search', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Production Engine active on port ${PORT}`));
+app.listen(PORT, () => console.log(`Production Engine active on port
