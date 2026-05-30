@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const https = require('https');
 const { OpenAI } = require('openai'); // OpenAI SDK for Groq
+const admin = require('firebase-admin'); // 🔥 Added for Server-Side Safe Firebase Operations
 
 const app = express();
 
@@ -14,6 +15,21 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 🛡️ INITIALIZE FIREBASE ADMIN SDK VIA ENVIRONMENT VARIABLE
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("🔥 [Firebase Admin] SDK Successfully Initialized via Environment Key!");
+  } else {
+    console.warn("⚠️ Warning: FIREBASE_SERVICE_ACCOUNT_JSON missing in Environment. Webhook db bypass won't execute.");
+  }
+} catch (fbInitErr) {
+  console.error("❌ Critical Firebase Admin Init Failed:", fbInitErr.message);
+}
 
 // 🔥 ULTRA-SAFE PRODUCTION KEY MANAGEMENT (GROQ & COSMFEED)
 function getActiveGroqKey() {
@@ -104,7 +120,7 @@ app.post('/create-order', async (req, res) => {
     });
 
     const options = {
-      hostname: 'api.cosmfeed.com', // Cosmfeed dynamic custom payment portal link node
+      hostname: 'api.cosmfeed.com', 
       path: '/v1/payments/create-link',
       method: 'POST',
       headers: {
@@ -138,7 +154,7 @@ app.post('/create-order', async (req, res) => {
 });
 
 // ==========================================================================
-// 🔔 AUTOMATED COSMFEED PAYMENT SUCCESS WEBHOOK HANDLER
+// 🔔 AUTOMATED COSMFEED PAYMENT SUCCESS WEBHOOK HANDLER (BULLETPROOF SOLUTION)
 // ==========================================================================
 app.post('/cosmfeed-webhook', async (req, res) => {
   try {
@@ -152,10 +168,33 @@ app.post('/cosmfeed-webhook', async (req, res) => {
 
       console.log(`🔥 SUCCESS: Payment verified for ${buyerEmail}. Unlocking book: ${bookId} [Txn: ${transactionId}]`);
 
-      // 🎯 NOTE FOR GANESH: Yahan par tum apna Firebase Admin SDK config call kar sakte ho 
-      // users data structure sync update chalane ke liye, backend automation process complete karne ko.
+      // Server-to-Server FireStore Auto Injection Pipeline
+      if (admin.apps.length > 0 && bookId && buyerEmail) {
+        const db = admin.firestore();
+        const usersRef = db.collection("users");
+        
+        // Match user by email address safely
+        const snapshot = await usersRef.where("email", "==", buyerEmail.trim()).get();
+        
+        if (!snapshot.empty) {
+          const userDoc = snapshot.docs[0];
+          const userRef = usersRef.doc(userDoc.id);
+
+          // Atomic update operation to push bookId into purchasedBooks node array
+          await userRef.update({
+            purchasedBooks: admin.firestore.FieldValue.arrayUnion(bookId)
+          });
+
+          console.log(`🎉 [Cloud Matrix Sync] Book ${bookId} automatically unlocked in DB for user account!`);
+        } else {
+          console.error(`❌ DB Sync Failed: User profile with email ${buyerEmail} not found.`);
+        }
+      } else {
+        console.error("❌ Firebase Admin SDK not active or metadata context incomplete.");
+      }
     }
 
+    // Always send 200 back to gateway to stop webhook retries
     res.status(200).send("OK");
   } catch (webhookErr) {
     console.error("❌ Webhook Execution Error:", webhookErr.message);
@@ -316,7 +355,7 @@ BOOK PAGE TEXT:
       messages: [
         { role: "user", content: embeddedPrompt }
       ],
-      model: "llama-3.1-8b-instant"
+      move: "llama-3.1-8b-instant"
     });
 
     const processedStoryText = response.choices[0].message.content.trim();
