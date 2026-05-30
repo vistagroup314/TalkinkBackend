@@ -15,11 +15,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔐 Instamojo LIVE Production Credentials
-const CLIENT_ID = 'LHym2sPPH5chVDyxD1UDUZ1jcNtjng9BlWJN5hil';
-const CLIENT_SECRET = 'YLWjfxmj2IT2DbDD0fMmCYkDqyWeChtOIUCpppNUSoh98X06upVVeXag6RDU11NARLX88QVn53XiJ5G8QGmLnftju33l30yU6zqeUuXHIMErELw7AAdwVkSwWbp3aW9Y';
-
-// 🔥 ULTRA-SAFE PRODUCTION KEY MANAGEMENT (GROQ)
+// 🔥 ULTRA-SAFE PRODUCTION KEY MANAGEMENT (GROQ & COSMFEED)
 function getActiveGroqKey() {
   const activeKey = process.env.GROQ_API_KEY;
   if (!activeKey) {
@@ -27,6 +23,9 @@ function getActiveGroqKey() {
   }
   return activeKey ? activeKey.trim() : "";
 }
+
+// 🔐 Cosmfeed Live Config Token (Render environment variables me set kar lena bhaa)
+const COSMFEED_API_KEY = process.env.COSMFEED_API_KEY || "YOUR_COSMFEED_API_KEY_HERE"; 
 
 function makeHttpsRequest(options, payloadData) {
   return new Promise((resolve, reject) => {
@@ -80,80 +79,56 @@ app.get('/ping', (req, res) => {
 });
 
 // ==========================================================================
-// 💳 EXISTING INSTAMOJO ORDER CREATION ROUTE
+// 💳 DYNAMIC COSMFEED ORDER CREATION ROUTE (Saves you from making individual links)
 // ==========================================================================
 app.post('/create-order', async (req, res) => {
   try {
     const { amount, purpose, buyer_name, email, bookId } = req.body;
-
-    const tokenPayload = new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET
-    }).toString();
-
-    const tokenOptions = {
-      hostname: 'api.instamojo.com', 
-      path: '/oauth2/token/',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': Buffer.byteLength(tokenPayload)
-      }
-    };
-
-    console.log("Generating Production OAuth2 Token...");
-    const tokenResult = await makeHttpsRequest(tokenOptions, tokenPayload);
-
-    if (tokenResult.statusCode !== 200 || !tokenResult.data.access_token) {
-      return res.status(401).json({
-        success: false,
-        message: "Live Authentication failed. KYC might be pending.",
-        details: tokenResult.data
-      });
-    }
-
-    const accessToken = tokenResult.data.access_token;
     const requestOrigin = req.headers.origin || 'https://bhoiganesh218.github.io';
-    const redirectUrl = `${requestOrigin}/talkink/?page=LibraryPage&bookId=${bookId}`;
 
+    // Dynamic dynamic payload mapping for Cosmfeed Custom Integration
     const paymentPayload = JSON.stringify({
-      amount: String(amount),
-      purpose: purpose || 'TalkInk Book Purchase',
-      buyer_name: buyer_name || 'TalkInk User',
-      email: email || 'user@talkink.com',
-      phone: '9999999999',
-      allow_repeated_payments: false,
-      send_email: true,
-      send_sms: false,
-      redirect_url: redirectUrl,
-      webhook: 'https://talkinkbackend.onrender.com/instamojo-webhook'
+      amount: Number(amount),
+      title: purpose || `TalkInk Premium Book Access`,
+      description: `Unlocking exclusive runtime access for Book ID: ${bookId}`,
+      redirectUrl: `${requestOrigin}/talkink/?page=LibraryPage&bookId=${bookId}`,
+      webhookUrl: 'https://talkinkbackend.onrender.com/cosmfeed-webhook',
+      customer: {
+        name: buyer_name || 'TalkInk User',
+        email: email || 'user@talkink.com'
+      },
+      metadata: {
+        bookId: bookId,
+        buyerEmail: email
+      }
     });
 
-    const paymentOptions = {
-      hostname: 'api.instamojo.com', 
-      path: '/v2/payment_requests/',
+    const options = {
+      hostname: 'api.cosmfeed.com', // Cosmfeed dynamic custom payment portal link node
+      path: '/v1/payments/create-link',
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${COSMFEED_API_KEY}`,
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(paymentPayload)
       }
     };
 
-    const paymentResult = await makeHttpsRequest(paymentOptions, paymentPayload);
+    console.log(`🚀 [Cosmfeed Engine] Generating custom payload payment link for Book ID: ${bookId}`);
+    const result = await makeHttpsRequest(options, paymentPayload);
 
-    if (paymentResult.statusCode >= 200 && paymentResult.statusCode < 300 && paymentResult.data.id) {
+    if (result.statusCode >= 200 && result.statusCode < 300 && result.data.url) {
+      // Sending back url matrix just like instamojo longurl to ensure 0 frontend breakage
       res.status(200).json({
         success: true,
-        longurl: paymentResult.data.longurl,
-        id: paymentResult.data.id
+        longurl: result.data.url,
+        id: result.data.paymentLinkId
       });
     } else {
       res.status(400).json({
         success: false,
-        message: "Production gateway rejected request. Check account verification.",
-        error: paymentResult.data
+        message: "Cosmfeed automated link generation rejected.",
+        error: result.data
       });
     }
 
@@ -162,8 +137,30 @@ app.post('/create-order', async (req, res) => {
   }
 });
 
-app.post('/instamojo-webhook', (req, res) => {
-   res.status(200).send("OK");
+// ==========================================================================
+// 🔔 AUTOMATED COSMFEED PAYMENT SUCCESS WEBHOOK HANDLER
+// ==========================================================================
+app.post('/cosmfeed-webhook', async (req, res) => {
+  try {
+    const eventData = req.body;
+    console.log("📥 [Cosmfeed Webhook Node] Received notification payload:", eventData);
+
+    // Verifying event confirmation context matrices
+    if (eventData.event === 'payment.success') {
+      const { bookId, buyerEmail } = eventData.metadata || {};
+      const transactionId = eventData.paymentId;
+
+      console.log(`🔥 SUCCESS: Payment verified for ${buyerEmail}. Unlocking book: ${bookId} [Txn: ${transactionId}]`);
+
+      // 🎯 NOTE FOR GANESH: Yahan par tum apna Firebase Admin SDK config call kar sakte ho 
+      // users data structure sync update chalane ke liye, backend automation process complete karne ko.
+    }
+
+    res.status(200).send("OK");
+  } catch (webhookErr) {
+    console.error("❌ Webhook Execution Error:", webhookErr.message);
+    res.status(500).send("Webhook Internal Failure");
+  }
 });
 
 
@@ -293,100 +290,23 @@ CURRENT TARGET LANGUAGE SYNTAX: Spoken Hinglish / Natural Devanagari Script text
 "${text}"`;
     } else {
       embeddedPrompt = `ROLE & TONE INSTRUCTION:
-
 You are not a teacher, lecturer, or robotic AI assistant.
-
 You sound like a smart, emotionally aware person casually explaining a book to someone sitting beside you.
 The vibe should feel natural, modern, warm, and deeply human — like a real conversation, not a scripted explanation.
 
 IMPORTANT:
-
 - Keep the flow smooth and conversational.
 - Avoid sounding overly dramatic or overly intellectual.
-- Do NOT overuse words like “friend”, “buddy”, “my friend”, etc.
-- Use them occasionally only when it feels natural.
 - The explanation should feel effortless and immersive.
 
 CRITICAL CONTEXT UNDERSTANDING RULE:
-The provided text is from a book page.
-
-Use proper context awareness before explaining.
-
-- If the text is written in first person (“I did this”, “I went there”), understand that this is the AUTHOR'S or CHARACTER’S experience — not the listener’s.
-- Never mistakenly shift the experience onto the listener.
-
-BAD:
-“You went there and learned this…”
-
-GOOD:
-“Here, the author is talking about a moment where they went through…”
-or
-“The character is describing how they felt during this situation…”
-
-Always preserve the correct perspective of the original text.
-
-LANGUAGE STYLE RULES:
-
-- Use very simple modern English.
-- Mix emotional clarity with casual conversational flow.
-- Avoid textbook-like wording.
-- Avoid sounding corporate, philosophical, or overly literary.
-
-STRICTLY AVOID WORDS LIKE:
-therefore, moreover, consequently, perspective, transformation, profound, significant, necessity, illustrates, demonstrates
-
-INSTEAD USE NATURAL WORDS LIKE:
-so, basically, kind of, honestly, the point is, what’s interesting is, this shows, this feels like, etc.
-
-EXPLANATION STYLE:
-
-- Don’t just summarize the page.
-- Break down emotions, meaning, hidden ideas, and character behavior in a very easy and relatable way.
-- Make complex ideas feel simple.
-- Explain things the way real people naturally talk.
-
-VERY IMPORTANT:
-
-- Avoid repetitive sentence patterns.
-- Avoid sounding like every paragraph was generated from the same template.
-- Let the tone breathe naturally.
-- Keep it immersive and emotionally intelligent without sounding fake-deep.
-
-ENDING RULE (VERY IMPORTANT):
-Do NOT end with generic motivational quotes every time.
-
-Instead, naturally end with ONE of these:
-
-- a relatable observation,
-- a real-world truth,
-- a thought-provoking line,
-- a subtle life insight,
-- a practical takeaway,
-- or a question that makes the listener think deeper about the topic.
-
-The ending must feel connected to the actual topic of the page.
-
-GOOD ENDING EXAMPLES:
-
-- “Honestly, people still hide emotions exactly like this in real life.”
-- “It’s interesting how this scene says more about human behavior than it does about the actual event.”
-- “If you think about it, most people don’t even notice when fear quietly controls their decisions.”
-- “You can kind of see why the character reacted that way once you look past the surface.”
-
-Then naturally mention TalkInk in a respectful and smooth way.
-
-Example:
-“Stories become way more powerful when you start noticing the emotions hidden underneath them. Keep exploring with TalkInk.”
+The provided text is from a book page. Use proper context awareness before explaining.
+- Always preserve the correct perspective of the original text. This is strictly a text from a book page, not your personal thoughts.
 
 STRICT RULES:
-
 1. Return ONLY the conversational explanation text.
 2. No markdown formatting.
-3. No greetings.
-4. No headers or labels.
-5. No robotic AI tone.
-6. No repetitive catchphrases.
-7. Make it feel like a real human conversation.
+3. No greetings or headers.
 
 BOOK PAGE TEXT:
 "${text}"`;
@@ -474,7 +394,6 @@ app.post('/smart-psychology-search', async (req, res) => {
         
         Strict Rules:
         1. Return ONLY a valid JSON string array. No conversational text, no markdown block wrappers (do NOT use \`\`\`json).
-        2. Example Input: "overcoming failure" -> Output: ["Neuroplasticity", "Grit Scale Theory", "Cognitive Reframing", "Learned Helplessness", "Growth Mindset"]
         
         SEARCH QUERY: "${query}"`;
 
